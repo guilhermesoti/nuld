@@ -94,12 +94,12 @@ static int is_ps1(int i) { return cv[i].kind == K_PS1 || (cv[i].kind == K_DISC &
 static int kind_icon(int i) { return cv[i].kind == K_APP ? UI_CHIP_18 : cv[i].cd || is_ps1(i) ? UI_CD_18 : UI_DVD_18; }
 static const char *kind_label(int i)
 {
-	return cv[i].kind == K_DISC ? L("DISCO", "DISC") : cv[i].kind == K_APP ? "APP" : cv[i].kind == K_PS1 ? "PS1" : cv[i].cd ? "CD" : "DVD";
+	return cv[i].kind == K_DISC ? L("DISCO", "DISC", "DISCO") : cv[i].kind == K_APP ? "APP" : cv[i].kind == K_PS1 ? "PS1" : cv[i].cd ? "CD" : "DVD";
 }
 
 // views (phase 10): the one shown, restored from estado.ini, which the icon thread rewrites when state_dirty is set
 enum { V_CAROUSEL, V_GRID, V_LIST, V_N };
-static const char *const view_names[2][V_N] = {{"CARRUSEL", "CUADRÍCULA", "LISTA"}, {"CAROUSEL", "GRID", "LIST"}};
+static const char *const view_names[3][V_N] = {{"CARRUSEL", "CUADRÍCULA", "LISTA"}, {"CAROUSEL", "GRID", "LIST"}, {"CARROSSEL", "GRADE", "LISTA"}};
 #define view_name view_names[lang_en] // phase 18
 static const char *view_key[V_N] = {"carrusel", "cuadricula", "lista"};
 static const int view_icon[V_N] = {UI_CAROUSEL_18, UI_GRID_18, UI_LIST_18};
@@ -269,14 +269,14 @@ static int save_info(int i, char *line1, char *line2, int n) // returns the save
 	for (int k = save_lists(i, l) - 1; k >= 0; k--)
 		for (int j = 0; j < l[k].n; j++)
 			count += (l[k].d[j].AttrFile & MC_ATTR_SUBDIR) && strstr((const char *)l[k].d[j].EntryName, cv[i].serial);
-	const char *v = m == MC_SHARED ? L("VIRTUAL COMPARTIDA", "SHARED VIRTUAL") : L("VIRTUAL DEL JUEGO", "PER-GAME VIRTUAL");
+	const char *v = m == MC_SHARED ? L("VIRTUAL COMPARTIDA", "SHARED VIRTUAL", "VIRTUAL COMPARTILHADO") : L("VIRTUAL DEL JUEGO", "PER-GAME VIRTUAL", "VIRTUAL POR JOGO");
 	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_MMCE && m == MC_GAME)
-		snprintf(line1, n, L("Memory card del MMCE", "MMCE memory card")), snprintf(line2, n, L("CAMBIA A LA DEL JUEGO AL JUGAR", "SWITCHES TO THE GAME'S ON PLAY"));
+		snprintf(line1, n, L("Memory card del MMCE", "MMCE memory card", "Memory card do MMCE")), snprintf(line2, n, L("CAMBIA A LA DEL JUEGO AL JUGAR", "SWITCHES TO THE GAME'S ON PLAY", "MUDA PARA O DO JOGO AO JOGAR"));
 	else if (vm && on_catalog(i)) // phase 17: its card is on the server, not read here
-		snprintf(line1, n, L("Memory card virtual", "Virtual memory card")), snprintf(line2, n, L("EN EL SERVIDOR", "ON THE SERVER"));
-	else if (vm && vmc_n[i] < 0) snprintf(line1, n, L("Memory card virtual", "Virtual memory card")), snprintf(line2, n, L("SE CREA AL JUGAR (8 MB)", "CREATED ON FIRST PLAY (8 MB)"));
-	else if (!vm && mcn[0] < 0 && mcn[1] < 0) snprintf(line1, n, L("Sin memory card", "No memory card")), snprintf(line2, n, L("INSERTA UNA EN MC1 / MC2", "INSERT ONE IN MC1 / MC2"));
-	else if (!count) snprintf(line1, n, L("Sin saves", "No saves")), snprintf(line2, n, "%s", vm ? v : L("NINGUNO EN MC1 · MC2", "NONE IN MC1 · MC2"));
+		snprintf(line1, n, L("Memory card virtual", "Virtual memory card", "Memory card virtual")), snprintf(line2, n, L("EN EL SERVIDOR", "ON THE SERVER", "NO SERVIDOR"));
+	else if (vm && vmc_n[i] < 0) snprintf(line1, n, L("Memory card virtual", "Virtual memory card", "Memory card virtual")), snprintf(line2, n, L("SE CREA AL JUGAR (8 MB)", "CREATED ON FIRST PLAY (8 MB)", "CRIADO AO JOGAR (8 MB)"));
+	else if (!vm && mcn[0] < 0 && mcn[1] < 0) snprintf(line1, n, L("Sin memory card", "No memory card", "Sem memory card")), snprintf(line2, n, L("INSERTA UNA EN MC1 / MC2", "INSERT ONE IN MC1 / MC2", "INSIRA UM EM MC1 / MC2"));
+	else if (!count) snprintf(line1, n, L("Sin saves", "No saves", "Sem jogos salvos")), snprintf(line2, n, "%s", vm ? v : L("NINGUNO EN MC1 · MC2", "NONE IN MC1 · MC2", "NENHUM EM MC1 · MC2"));
 	else {
 		const sceMcStDateTime *bd = NULL;
 		const char *name = newest_save(i, &port);
@@ -284,7 +284,7 @@ static int save_info(int i, char *line1, char *line2, int n) // returns the save
 			for (int j = 0; j < l[k].n; j++)
 				if ((const char *)l[k].d[j].EntryName == name) bd = &l[k].d[j]._Modify;
 		snprintf(line1, n, "%d save%s", count, count > 1 ? "s" : "");
-		if (vm) snprintf(line2, n, "%s · %02d/%02d/%04d", m == MC_SHARED ? L("COMPARTIDA", "SHARED") : "VIRTUAL", bd->Day, bd->Month, bd->Year);
+		if (vm) snprintf(line2, n, "%s · %02d/%02d/%04d", m == MC_SHARED ? L("COMPARTIDA", "SHARED", "COMPARTILHADO") : "VIRTUAL", bd->Day, bd->Month, bd->Year);
 		else snprintf(line2, n, "MEMORY CARD %d · %02d/%02d/%04d", port + 1, bd->Day, bd->Month, bd->Year); // ponytail: JST
 	}
 	return count;
@@ -620,14 +620,14 @@ static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4
 {
 	static char http[16];
 	switch (r) {
-	case NET_ERR_MODULES: return L("drivers de red", "network drivers");
-	case NET_ERR_LINK: return L("cable no detectado", "cable not detected");
-	case NET_ERR_DHCP: return L("sin respuesta DHCP", "no DHCP answer");
+	case NET_ERR_MODULES: return L("drivers de red", "network drivers", "drivers de rede");
+	case NET_ERR_LINK: return L("cable no detectado", "cable not detected", "cabo não detectado");
+	case NET_ERR_DHCP: return L("sin respuesta DHCP", "no DHCP answer", "sem resposta DHCP");
 	case NET_ERR_DNS: return "DNS";
-	case NET_ERR_CONNECT: return L("no conecta", "connection failed");
+	case NET_ERR_CONNECT: return L("no conecta", "connection failed", "falha na conexão");
 	case NET_ERR_TLS: return "TLS";
-	case NET_ERR_PROTO: return L("respuesta inválida", "bad response");
-	case NET_ERR_BUSY: return L("el adaptador es de UDPBD", "the adapter belongs to UDPBD");
+	case NET_ERR_PROTO: return L("respuesta inválida", "bad response", "resposta inválida");
+	case NET_ERR_BUSY: return L("el adaptador es de UDPBD", "the adapter belongs to UDPBD", "o adaptador está em uso pelo UDPBD");
 	}
 	return snprintf(http, sizeof(http), "HTTP %d", r), http;
 }
@@ -640,9 +640,9 @@ static int catalog_load(int s, int n)
 	int body, len, max = 256 << 10, got = 0, r = 0;
 	char *buf = malloc(max);
 	if (!buf || (r = net_ready()) < 0)
-		snprintf(detail, sizeof(detail), L("Sin red (%s): no se leyó el catálogo de juegos del servidor", "No network (%s): the server's game catalog was not read"), net_err(r)), why = detail;
+		snprintf(detail, sizeof(detail), L("Sin red (%s): no se leyó el catálogo de juegos del servidor", "No network (%s): the server's game catalog was not read", "Sem rede (%s): catálogo de jogos do servidor não lido"), net_err(r)), why = detail;
 	else if ((r = http_get(host, 18290, "/catalog", buf, max - 1, &body, &len)) != 200)
-		snprintf(detail, sizeof(detail), L("El catálogo de %s:18290 no respondió (%s): ¿corre nuld_catalog.py? (sin él: servidor vacío)", "The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)"),
+		snprintf(detail, sizeof(detail), L("El catálogo de %s:18290 no respondió (%s): ¿corre nuld_catalog.py? (sin él: servidor vacío)", "The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)", "O catálogo em %s:18290 não respondeu (%s): nuld_catalog.py está rodando? (sem ele: servidor vazio)"),
 		         host, net_err(r)), why = detail;
 	else {
 		char *p = buf + body;
@@ -695,7 +695,7 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 	char path[300];
 	int n = 1; // cv[0]: the disc drive, filled in by the disc thread
 	cv[0].kind = K_DISC, cv[0].disc = D_NONE;
-	snprintf(cv[0].title, sizeof(cv[0].title), L("Sin disco", "No disc"));
+	snprintf(cv[0].title, sizeof(cv[0].title), L("Sin disco", "No disc", "Sem disco"));
 	total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
 	for (int s = 0; s < nsrc; s++)
 		if (src[s].type != SRC_HDL && !(src[s].type == SRC_UDPFS && udpfs_cat) && (s || src_want & 1u << src[0].type))
@@ -780,8 +780,8 @@ static void disc_thread(void *arg)
 			if (st == D_PS1) snprintf(d->boot, sizeof(d->boot), "%s", file); // PS1DRV takes the bare file name
 			serial_dash(file, d->serial);
 		}
-		const char *what = st == D_NONE ? L("Sin disco", "No disc") : st == D_READING ? L("Leyendo disco...", "Reading disc...") : st == D_OTHER ?
-		                   L("Disco no compatible", "Unsupported disc") : st == D_PS2 ? L("Disco de PS2", "PS2 disc") : L("Disco de PS1", "PS1 disc");
+		const char *what = st == D_NONE ? L("Sin disco", "No disc", "Sem disco") : st == D_READING ? L("Leyendo disco...", "Reading disc...", "Lendo disco...") : st == D_OTHER ?
+		                   L("Disco no compatible", "Unsupported disc", "Disco incompatível") : st == D_PS2 ? L("Disco de PS2", "PS2 disc", "Disco de PS2") : L("Disco de PS1", "PS1 disc", "Disco de PS1");
 		snprintf(d->title, sizeof(d->title), "%s", what);
 		for (int i = 1; i < ncv && *d->serial; i++) // the same game on the USB lends its title
 			if (!strcmp(cv[i].serial, d->serial)) snprintf(d->title, sizeof(d->title), "%s", cv[i].title);
@@ -794,7 +794,7 @@ static void disc_thread(void *arg)
 
 // ---- config (phase 7): mass0:/nuld/config.ini, created from this template when missing; per-game options in
 // juegos.ini, one section per dash serial with only the keys that differ from the defaults ----
-static const char *const config_template[2] = {
+static const char *const config_template[3] = {
 	"; NULD - configuración, se lee al arrancar\n" // the first line names the language (phase 18)
 	"\n[ui]\n; idioma de la interfaz y de estos comentarios: es = español, en = inglés (english)\nidioma = es\n"
 	"\n[juegos]\n; dónde buscar juegos de PS2 (carpetas DVD y CD), separados por comas: usb, hdd, mx4sio, ilink, mmce,\n"
@@ -864,12 +864,78 @@ static const char *const config_template[2] = {
 	"; its autoboot points to mc?:/BOOT/NULD.ELF (the launcher installs it).\n"
 	"; buttons: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (up down left right triangle circle x square), joined with +; empty = off\n"
-	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n"};
+	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
+	"; NULD - configuração, lida ao iniciar\n"
+	"\n"
+	"[ui]\n"
+	"; Idioma da interface: pt-BR = português brasileiro, es = espanhol, en = inglês\n"
+	"idioma = pt-BR\n"
+	"\n"
+	"[juegos]\n"
+	"; Origem dos jogos PS2 (pastas DVD e CD), separada por vírgulas: usb, hdd, mx4sio, ilink, mmce,\n"
+	"; udpbd, udpfs. hdd aceita exFAT ou APA com HD Loader. udpbd usa o IP fixo em [red].\n"
+	"; MX4SIO e MMCE não funcionam juntos. Configurações, capas, Neutrino, POPS e APPS ficam no USB.\n"
+	"origen = usb\n"
+	"; IP do servidor com nuld_catalog. Vazio: servidor UDPFS comum, IP fixo em [red], sem capas/conquistas online.\n"
+	"servidor =\n"
+	"\n"
+	"[memorycard]\n"
+	"; juego = virtual por jogo (VMC/<serial>.bin); compartida = virtual compartilhado (VMC/NULD.bin);\n"
+	"; fisica = memory card no slot 1. Triângulo altera por jogo. HD Loader exige físico; MMCE troca automaticamente.\n"
+	"modo = juego\n"
+	"\n"
+	"[video]\n"
+	"; Modo dos jogos: nativo, 480p ou 1080i. Triângulo altera por jogo.\n"
+	"modo = 480p\n"
+	"; Menu: 720p ou 480i (TV de tubo). L2+R2 alterna e salva. Em 480i, jogos usam nativo por padrão.\n"
+	"pantalla = 720p\n"
+	"\n"
+	"[sonido]\n"
+	"; Volume dos sons do menu: 0-100\n"
+	"volumen = 100\n"
+	"\n"
+	"[red]\n"
+	"; dhcp ou IP fixo. mascara = máscara, puerta = gateway. DNS também funciona com DHCP.\n"
+	"ip = dhcp\n"
+	"mascara = 255.255.255.0\n"
+	"puerta =\n"
+	"dns =\n"
+	"\n"
+	"[portadas]\n"
+	"; si = baixar capas ausentes do GitHub xlenore/ps2-covers, com cabo de rede conectado\n"
+	"descargar = si\n"
+	"\n"
+	"[actualizaciones]\n"
+	"; no = manter a versão traduzida. O atualizador original instala a versão oficial, sem esta tradução.\n"
+	"buscar = no\n"
+	"\n"
+	"[logros]\n"
+	"; RetroAchievements: si = consultar cliente xeRAbora na rede; no = desativar\n"
+	"activos = si\n"
+	"; IP do cliente; vazio = procurar na rede\n"
+	"servidor =\n"
+	"\n"
+	"[jellyfin]\n"
+	"; Servidor Jellyfin (http://IP:8096), usuário e senha. Vazio = desativado.\n"
+	"servidor =\n"
+	"usuario =\n"
+	"clave =\n"
+	"; Idiomas das legendas em ordem de preferência; no = sem legendas. Quadrado troca a faixa.\n"
+	"subtitulos = por\n"
+	"\n"
+	"[igr]\n"
+	"; Menu pausa o jogo; reiniciar reinicia o console; apagar desliga. Requer Neutrino compilado deste fork.\n"
+	"; FMCB pode iniciar mc?:/BOOT/NULD.ELF automaticamente (instalado pelo launcher).\n"
+	"; Botões aceitos: L1 L2 R1 R2 L3 R3 START SELECT UP DOWN LEFT RIGHT TRIANGLE CIRCLE X SQUARE.\n"
+	"; Combine com +; vazio = desativado. As chaves permanecem no formato original por compatibilidade.\n"
+	"menu = L1+L2+R1+R2+START+SELECT\n"
+	"reiniciar =\n"
+	"apagar = L1+L2+R1+R2+L3+R3\n"};
 static ini cfg, games;
 static volatile int cfg_volume = 100;
 static const char *src_why; // the first source that did not come up (toast after the splash)
 static int ra_on;           // [logros] activos (phase 16)
-int lang_en;                // [ui] idioma = en (phase 18, lang.h)
+int lang_en = LANG_PT_BR;                // [ui] idioma = en (phase 18, lang.h)
 static int w_first;         // no config.ini at boot: the setup wizard opens by itself (#15)
 static int crt;             // [video] pantalla = 480i: menu in 480i / 576i, games native by default
 
@@ -883,13 +949,13 @@ static void load_config(void) // loader thread, before the splash sound
 		closedir(o);
 		if (rename(old, dir)) home_dir = "orbit", home_paths();
 	} else if (!d) mkdir(dir, 0777);
-	if (!ini_load(&cfg, CONFIG)) { // Spanish, the default, until the user picks another idioma
+	if (!ini_load(&cfg, CONFIG)) { // Brazilian Portuguese is the default for this fork
 		w_first = 1;               // the setup wizard opens on the home screen (#15)
 		FILE *f = fopen(CONFIG, "wb");
-		if (f) fputs(config_template[0], f), fclose(f);
-		ini_parse(&cfg, config_template[0]);
+		if (f) fputs(config_template[LANG_PT_BR], f), fclose(f);
+		ini_parse(&cfg, config_template[LANG_PT_BR]);
 	}
-	lang_en = !strcasecmp(ini_get(&cfg, "ui", "idioma", "es"), "en"); // phase 18: first, the rest may show text
+	lang_en = ui_language(ini_get(&cfg, "ui", "idioma", "pt-BR")); // phase 18: first, the rest may show text
 	// phase 18: the comments follow idioma. A file NULD (or ORBIT, until v1.1) wrote (its first line names the
 	// language) in the other language is written again from that language's template with every value kept
 	// (ini_render); a file the user wrote from scratch is left alone
@@ -897,14 +963,15 @@ static void load_config(void) // loader thread, before the splash sound
 	FILE *cf = fopen(CONFIG, "rb");
 	if (cf) fgets(first, sizeof(first), cf), fclose(cf);
 	const char *body = first + (!strncmp(first, "; NULD - ", 9) ? 9 : !strncmp(first, "; ORBIT - ", 10) ? 10 : 0);
+	int file_pt = body > first && !strncmp(body, "configuração", 12);
 	int file_en = body > first && !strncmp(body, "configuration", 13), file_es = body > first && !strncmp(body, "configuraci", 11);
-	if ((file_en && !lang_en) || (file_es && lang_en)) {
+	if ((file_en && lang_en != 1) || (file_es && lang_en != 0) || (file_pt && lang_en != LANG_PT_BR)) {
 		static char out[16384];
 		int n = ini_render(config_template[lang_en], &cfg, out, sizeof(out));
 		if (n > 0 && (cf = fopen(CONFIG, "wb"))) {
 			int ok = fwrite(out, 1, n, cf) == (size_t)n;
 			ok &= fclose(cf) == 0;
-			printf("config.ini rewritten in %s: %s\n", lang_en ? "English" : "Spanish", ok ? "ok" : "FAILED");
+			printf("config.ini rewritten in %s: %s\n", lang_en == LANG_PT_BR ? "Portuguese (Brazil)" : lang_en == 1 ? "English" : "Spanish", ok ? "ok" : "FAILED");
 		}
 	}
 	int v = atoi(ini_get(&cfg, "sonido", "volumen", "100"));
@@ -916,7 +983,7 @@ static void load_config(void) // loader thread, before the splash sound
 	ra_on = !strcasecmp(ini_get(&cfg, "logros", "activos", "si"), "si"); // phase 16
 	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "720p"), "480i");
 	src_want = src_mask(ini_get(&cfg, "juegos", "origen", "usb")); // phase 14
-	if (!src_want) src_want = 1u << SRC_USB, src_why = L("Origen de juegos desconocido en config.ini: usando USB", "Unknown game source in config.ini: using USB");
+	if (!src_want) src_want = 1u << SRC_USB, src_why = L("Origen de juegos desconocido en config.ini: usando USB", "Unknown game source in config.ini: using USB", "Origem de jogos desconhecida em config.ini: usando USB");
 	ini_load(&games, GAMES_INI);
 	static ini state;
 	ini_load(&state, STATE_INI);
@@ -926,18 +993,20 @@ static void load_config(void) // loader thread, before the splash sound
 
 // video: 0 = default (config), 1 nativo, 2 480p (-gsm=fp2), 3 1080i (-gsm=1080ix2); Neutrino README for -gsm / -gc
 static const char *vid_key[4] = {NULL, "nativo", "480p", "1080i"};
-static const char *const vid_labels[2][4] = {{"Predeterminado", "Nativo", "480p", "1080i"}, {"Default", "Native", "480p", "1080i"}};
+static const char *const vid_labels[3][4] = {{"Predeterminado", "Nativo", "480p", "1080i"}, {"Default", "Native", "480p", "1080i"}, {"Padrão", "Nativo", "480p", "1080i"}};
 #define vid_label vid_labels[lang_en]
 static const char gc_modes[] = "02357";
-static const char *const gc_name_l[2][5] = {{"Lectura rápida (0)", "Lectura síncrona (2)", "Sin hooks de syscalls (3)",
+static const char *const gc_name_l[3][5] = {{"Lectura rápida (0)", "Lectura síncrona (2)", "Sin hooks de syscalls (3)",
                                              "Emular DVD-DL (5)", "Corregir buffer overrun (7)"},
                                             {"Fast reads (0)", "Synchronous reads (2)", "No syscall hooks (3)",
-                                             "Emulate DVD-DL (5)", "Fix buffer overrun (7)"}};
+                                             "Emulate DVD-DL (5)", "Fix buffer overrun (7)"},
+ {"Leitura rápida (0)", "Leitura síncrona (2)", "Sem hooks de syscalls (3)", "Emular DVD-DL (5)", "Corrigir estouro de buffer (7)"}};
 #define gc_names gc_name_l[lang_en]
 enum { OPT_VIDEO, OPT_COMPAT, OPT_MC, OPT_GC, OPT_ROWS = OPT_GC + 5 };
 static const char *mc_key[MC_N] = {NULL, "juego", "compartida", "fisica"};
-static const char *const mc_labels[2][MC_N] = {{"Predeterminada", "Virtual del juego", "Virtual compartida", "Física (ranura 1)"},
-                                              {"Default", "Per-game virtual", "Shared virtual", "Physical (slot 1)"}};
+static const char *const mc_labels[3][MC_N] = {{"Predeterminada", "Virtual del juego", "Virtual compartida", "Física (ranura 1)"},
+                                              {"Default", "Per-game virtual", "Shared virtual", "Physical (slot 1)"},
+ {"Padrão", "Virtual por jogo", "Virtual compartilhado", "Físico (slot 1)"}};
 #define mc_label mc_labels[lang_en]
 
 static int vid_index(const char *s)
@@ -996,16 +1065,16 @@ static void opt_value(int i, int row, char *out, int n)
 	if (row == OPT_VIDEO) {
 		int v = game_vid(i);
 		if (v) snprintf(out, n, "%s", vid_label[v]);
-		else snprintf(out, n, L("Predet. (%s)", "Default (%s)"), vid_label[game_video(i)]);
+		else snprintf(out, n, L("Predet. (%s)", "Default (%s)", "Padrão (%s)"), vid_label[game_video(i)]);
 	} else if (row == OPT_MC) {
 		int m = game_mcv(i);
-		if (src[(int)cv[i].src].type == SRC_HDL) snprintf(out, n, L("Física (HD Loader)", "Physical (HD Loader)"));
+		if (src[(int)cv[i].src].type == SRC_HDL) snprintf(out, n, L("Física (HD Loader)", "Physical (HD Loader)", "Físico (HD Loader)"));
 		else if (m) snprintf(out, n, "%s", mc_label[m]);
-		else snprintf(out, n, L("Predet. (%s)", "Default (%s)"), mc_label[game_mc(i)]);
+		else snprintf(out, n, L("Predet. (%s)", "Default (%s)", "Padrão (%s)"), mc_label[game_mc(i)]);
 	} else if (row == OPT_COMPAT) {
 		if (game_compat(i)) snprintf(out, n, "%d", game_compat(i));
 		else snprintf(out, n, "No");
-	} else snprintf(out, n, "%s", game_gc(i, row - OPT_GC) ? L("Sí", "Yes") : "No");
+	} else snprintf(out, n, "%s", game_gc(i, row - OPT_GC) ? L("Sí", "Yes", "Sim") : L("No", "No", "Não"));
 }
 
 // ---- sound: tools/sfx.py WAVs -> SPU2 ADPCM (adpenc, Makefile), played on free SPU2 voices by audsrv ----
@@ -1407,9 +1476,9 @@ static void splash(int t, float fade)
 	char st[64];
 	float goal = stage < 2 ? 0.05f * stage : stage == 3 ? 1 : 0.1f + 0.9f * (total_n ? (float)done_n / total_n : 0);
 	shown += (goal - shown) * 0.08f;
-	if (stage == 0) snprintf(st, sizeof(st), L("Iniciando USB", "Starting USB"));
-	else if (stage == 1) snprintf(st, sizeof(st), L("Leyendo memory cards", "Reading memory cards"));
-	else snprintf(st, sizeof(st), L("Cargando portadas  %02d / %02d", "Loading covers  %02d / %02d"), done_n, total_n);
+	if (stage == 0) snprintf(st, sizeof(st), L("Iniciando USB", "Starting USB", "Iniciando USB"));
+	else if (stage == 1) snprintf(st, sizeof(st), L("Leyendo memory cards", "Reading memory cards", "Lendo memory cards"));
+	else snprintf(st, sizeof(st), L("Cargando portadas  %02d / %02d", "Loading covers  %02d / %02d", "Carregando capas  %02d / %02d"), done_n, total_n);
 	splash_msg(st);
 	gfx_begin();
 	splash_draw(t / 60.f);
@@ -1524,7 +1593,7 @@ static unsigned char wave[MAXC]; // frames before a cover starts moving after a 
 static int gtop, ltop;           // first grid row / first list row on screen (targets)
 // filters (phase 11, L1/R1): views lay out positions, not indices; pos[i] < 0 = hidden (fades where it is)
 enum { F_ALL, F_PS2, F_PS1, F_APP, F_N };
-static const char *const filter_names[2][F_N] = {{"TODO", "PS2", "PS1", "APPS"}, {"ALL", "PS2", "PS1", "APPS"}};
+static const char *const filter_names[3][F_N] = {{"TODO", "PS2", "PS1", "APPS"}, {"ALL", "PS2", "PS1", "APPS"}, {"TODOS", "PS2", "PS1", "APPS"}};
 #define filter_name filter_names[lang_en]
 static int filter, pos[MAXC], order[MAXC], nord;
 
@@ -1667,12 +1736,12 @@ static void options_panel(int i, int row) // △ menu: the game's Neutrino optio
 	for (int r = 0; r < OPT_ROWS; r++) {
 		if (r == OPT_GC) { // section label
 			gfx_tracking(3);
-			gfx_text(&gfx_font_mono, x + 28, ry + 8, L("MODOS DE COMPATIBILIDAD (NEUTRINO -GC)", "COMPATIBILITY MODES (NEUTRINO -GC)"), LABEL);
+			gfx_text(&gfx_font_mono, x + 28, ry + 8, L("MODOS DE COMPATIBILIDAD (NEUTRINO -GC)", "COMPATIBILITY MODES (NEUTRINO -GC)", "MODOS DE COMPATIBILIDADE (NEUTRINO -GC)"), LABEL);
 			gfx_tracking(0);
 			ry += 34;
 		}
 		if (r == row) sel_row(x + 12, ry, w - 24, 40);
-		const char *label = r == OPT_VIDEO ? "Video" : r == OPT_COMPAT ? L("Compatibilidad de video", "Video compatibility") :
+		const char *label = r == OPT_VIDEO ? "Video" : r == OPT_COMPAT ? L("Compatibilidad de video", "Video compatibility", "Compatibilidade de vídeo") :
 		                    r == OPT_MC ? "Memory card" : gc_names[r - OPT_GC];
 		gfx_text(&gfx_font_ui, x + 28, ry + 8, label, r == row ? TEXT : TEXT2);
 		opt_value(i, r, a, sizeof(a));
@@ -1690,6 +1759,7 @@ static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE,
 static int w_cur; // the source checkbox under the cursor; w_val[W_SRC] is the mask (1 << SRC_*)
 static const char *const w_mcm[3] = {"juego", "compartida", "fisica"}, *const w_vid[3] = {"nativo", "480p", "1080i"};
 static const char *const w_lk[] = {"Auto", "R1", "L1", "R2", "L2", "Triangle", "Circle", "Square", "Cross", "Start", "Select"};
+static const char *const w_lk_pt[] = {"Auto", "R1", "L1", "R2", "L2", "Triângulo", "Círculo", "Quadrado", "X", "Start", "Select"};
 static const char *const w_lk_es[] = {"Auto", "R1", "L1", "R2", "L2", "Triángulo", "Círculo", "Cuadrado", "X", "Start", "Select"};
 #define W_NLK 11 // w_val[W_FMCB]: 0 no change, 1 autoboot, 2..W_NLK a button, W_NLK + 1 an item in FMCB's menu
 #define W_STUB "mc?:/BOOT/NULD.ELF"
@@ -1728,7 +1798,7 @@ static void wiz_open(void)
 static void wiz_save(void) // icon thread
 {
 	static char out[16384];
-	ini_set(&cfg, "ui", "idioma", w_val[W_LANG] ? "en" : "es");
+	ini_set(&cfg, "ui", "idioma", w_val[W_LANG] == LANG_PT_BR ? "pt-BR" : w_val[W_LANG] == 1 ? "en" : "es");
 	char list[64] = ""; // hdd also covers HD Loader disks (src_mask)
 	for (int k = 0; k < W_NCHIP; k++)
 		if (w_val[W_SRC] & 1u << w_chip[k]) snprintf(list + strlen(list), sizeof(list) - strlen(list), "%s%s", *list ? ", " : "", src_key[(int)w_chip[k]]);
@@ -1740,7 +1810,7 @@ static void wiz_save(void) // icon thread
 	FILE *f = n > 0 ? fopen(CONFIG, "wb") : NULL;
 	int ok = f && fwrite(out, 1, n, f) == (size_t)n;
 	if (f) ok &= fclose(f) == 0;
-	snprintf(w_sum[0], 100, "%s: %s", CONFIG, ok ? L("guardado", "saved") : L("ERROR al guardar", "ERROR saving"));
+	snprintf(w_sum[0], 100, "%s: %s", CONFIG, ok ? L("guardado", "saved", "salvo") : L("ERROR al guardar", "ERROR saving", "ERRO ao salvar"));
 	w_nsum = 1;
 	int c = w_val[W_CARD], stub = c >= 0 && stub_write(c), v = w_val[W_FMCB], fp = w_fmcb_card();
 	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/NULD.ELF: %s", c, stub ? "ok" : "ERROR");
@@ -1753,7 +1823,7 @@ static void wiz_save(void) // icon thread
 		snprintf(key, sizeof(key), "LK_%s_E1", w_lk[v <= W_NLK ? v - 1 : 0]);
 		ok = ok && (v <= W_NLK ? cnf_set(t, max, key, W_STUB) : cnf_menu_add(t, max, "NULD", W_STUB) > 0);
 		ok = ok && mc_write(fp, "/SYS-CONF/FREEMCB.CNF", t, strlen(t));
-		snprintf(w_sum[w_nsum++], 100, "mc%d:/SYS-CONF/FREEMCB.CNF: %s", fp, ok ? (v <= W_NLK ? key : L("menú + NULD", "menu + NULD")) : "ERROR");
+		snprintf(w_sum[w_nsum++], 100, "mc%d:/SYS-CONF/FREEMCB.CNF: %s", fp, ok ? (v <= W_NLK ? key : L("menú + NULD", "menu + NULD", "menu + NULD")) : "ERROR");
 	}
 }
 
@@ -1767,18 +1837,18 @@ static void update_install(void) // icon thread: every file that differs, downlo
 	for (int k = 0; k < upd.n && ok; k++) {
 		upd_file *f = &upd.f[k];
 		snprintf(path, sizeof(path), "%s/%s", homedev, f->dest);
-		snprintf(w_sum[k], 100, L("%s: descargando...", "%s: downloading..."), f->dest);
+		snprintf(w_sum[k], 100, L("%s: descargando...", "%s: downloading...", "%s: baixando..."), f->dest);
 		w_nsum = k + 1; // the panel shows the line while it works
 		FILE *fp = buf ? fopen(path, "rb") : NULL;
 		int n = fp ? (int)fread(buf, 1, max, fp) : -1;
 		if (fp) fclose(fp);
-		if (n == f->size && (upd_sha256(buf, n, hex), !strcmp(hex, f->sha))) { snprintf(w_sum[k], 100, L("%s: ya al día", "%s: up to date"), f->dest); continue; }
+		if (n == f->size && (upd_sha256(buf, n, hex), !strcmp(hex, f->sha))) { snprintf(w_sum[k], 100, L("%s: ya al día", "%s: up to date", "%s: já atualizado"), f->dest); continue; }
 		snprintf(url, sizeof(url), "%s%s", upd_base, f->asset);
 		upd_k = k, upd_phase = 1, net_got = 0;
 		int st = buf ? net_fetch(url, buf, max, &body, &len) : NET_ERR_PROTO;
 		ok = st == 200 && len == f->size && (upd_sha256(buf + body, len, hex), !strcmp(hex, f->sha));
 		snprintf(np, sizeof(np), "%s.new", path);
-		if (ok) snprintf(w_sum[k], 100, L("%s: guardando...", "%s: writing..."), f->dest);
+		if (ok) snprintf(w_sum[k], 100, L("%s: guardando...", "%s: writing...", "%s: salvando..."), f->dest);
 		upd_phase = 2, upd_done = 0;
 		if (ok && (fp = fopen(np, "wb"))) { // in 64 KB pieces, for the bar
 			for (int w; ok && upd_done < len; upd_done += w)
@@ -1787,8 +1857,8 @@ static void update_install(void) // icon thread: every file that differs, downlo
 		}
 		else ok = 0;
 		todo[k] = ok;
-		snprintf(w_sum[k], 100, "%s: %s", f->dest, ok ? L("descargado y comprobado", "downloaded and checked") :
-		         st != 200 ? L("ERROR de descarga", "download ERROR") : L("ERROR: no coincide", "ERROR: does not match"));
+		snprintf(w_sum[k], 100, "%s: %s", f->dest, ok ? L("descargado y comprobado", "downloaded and checked", "baixado e verificado") :
+		         st != 200 ? L("ERROR de descarga", "download ERROR", "ERRO no download") : L("ERROR: no coincide", "ERROR: does not match", "ERRO: não confere"));
 	}
 	for (int k = 0; k < upd.n; k++) { // all or nothing: the swap only once every file is in
 		if (!todo[k]) continue;
@@ -1797,11 +1867,11 @@ static void update_install(void) // icon thread: every file that differs, downlo
 		if (!ok) { remove(np); continue; }
 		remove(op);
 		rename(path, op);
-		if (rename(np, path)) ok = 0, snprintf(w_sum[k], 100, L("%s: ERROR al instalar (queda %s.old)", "%s: install ERROR (%s.old kept)"), upd.f[k].dest, upd.f[k].dest);
+		if (rename(np, path)) ok = 0, snprintf(w_sum[k], 100, L("%s: ERROR al instalar (queda %s.old)", "%s: install ERROR (%s.old kept)", "%s: ERRO ao instalar (%s.old mantido)"), upd.f[k].dest, upd.f[k].dest);
 	}
 	upd_phase = 0;
 	free(buf);
-	snprintf(w_sum[w_nsum++], 100, ok ? L("NULD %s instalado", "NULD %s installed") : L("No se actualizó", "Not updated"), upd.version);
+	snprintf(w_sum[w_nsum++], 100, ok ? L("NULD %s instalado", "NULD %s installed", "NULD %s instalado") : L("No se actualizó", "Not updated", "Não atualizado"), upd.version);
 	if (ok) upd_avail = 0;
 }
 
@@ -1826,28 +1896,28 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 	int v = w_val[r], fp = w_fmcb_card();
 	char cur[64] = "";
 	switch (r) {
-	case W_LANG: snprintf(a, n, "%s", v ? "English" : "Español"); break;
-	case W_MC: snprintf(a, n, "%s", v == 0 ? L("Virtual por juego", "Per-game virtual") : v == 1 ? L("Virtual compartida", "Shared virtual") : L("Física", "Physical")); break;
-	case W_VIDEO: snprintf(a, n, "%s", v == 0 ? L("Nativo", "Native") : w_vid[v]); break;
+	case W_LANG: snprintf(a, n, "%s", v == LANG_PT_BR ? "Português (Brasil)" : v == 1 ? "English" : "Español"); break;
+	case W_MC: snprintf(a, n, "%s", v == 0 ? L("Virtual por juego", "Per-game virtual", "Virtual por jogo") : v == 1 ? L("Virtual compartida", "Shared virtual", "Virtual compartilhado") : L("Física", "Physical", "Físico")); break;
+	case W_VIDEO: snprintf(a, n, "%s", v == 0 ? L("Nativo", "Native", "Nativo") : w_vid[v]); break;
 	case W_NET: snprintf(a, n, "%s", v ? w_ip : "DHCP"); break;
-	case W_CARD: if (v < 0) snprintf(a, n, L("Sin memory card", "No memory card")); else snprintf(a, n, "MC%d", v + 1); break;
+	case W_CARD: if (v < 0) snprintf(a, n, L("Sin memory card", "No memory card", "Sem memory card")); else snprintf(a, n, "MC%d", v + 1); break;
 	case W_FMCB:
-		if (w_done < 1) snprintf(a, n, L("Leyendo...", "Reading..."));
-		else if (fp < 0 || w_val[W_CARD] < 0) snprintf(a, n, L("FreeMcBoot no encontrado", "FreeMcBoot not found"));
-		else if (!v) snprintf(a, n, L("Sin cambios (auto: %s)", "No change (auto: %s)"), cnf_get(fmcb_txt[fp], "LK_Auto_E1", cur, sizeof(cur)) ? cur : "-");
-		else if (v == 1) snprintf(a, n, L("Autoarranque", "Autoboot"));
-		else if (v <= W_NLK) snprintf(a, n, L("Botón %s", "Button %s"), lang_en ? w_lk[v - 1] : w_lk_es[v - 1]);
-		else snprintf(a, n, L("Entrada en el menú de FMCB", "Item in FMCB's menu"));
+		if (w_done < 1) snprintf(a, n, L("Leyendo...", "Reading...", "Lendo..."));
+		else if (fp < 0 || w_val[W_CARD] < 0) snprintf(a, n, L("FreeMcBoot no encontrado", "FreeMcBoot not found", "FreeMcBoot não encontrado"));
+		else if (!v) snprintf(a, n, L("Sin cambios (auto: %s)", "No change (auto: %s)", "Sem alterações (auto: %s)"), cnf_get(fmcb_txt[fp], "LK_Auto_E1", cur, sizeof(cur)) ? cur : "-");
+		else if (v == 1) snprintf(a, n, L("Autoarranque", "Autoboot", "Início automático"));
+		else if (v <= W_NLK) snprintf(a, n, L("Botón %s", "Button %s", "Botão %s"), lang_en == LANG_PT_BR ? w_lk_pt[v - 1] : lang_en == 1 ? w_lk[v - 1] : w_lk_es[v - 1]);
+		else snprintf(a, n, L("Entrada en el menú de FMCB", "Item in FMCB's menu", "Entrada no menu do FMCB"));
 		break;
-	case W_UPD: snprintf(a, n, L("Actualizar NULD a %s", "Update NULD to %s"), upd.version); break;
-	default: snprintf(a, n, "%s", L("Guardar y reiniciar", "Save and restart"));
+	case W_UPD: snprintf(a, n, L("Actualizar NULD a %s", "Update NULD to %s", "Atualizar NULD para %s"), upd.version); break;
+	default: snprintf(a, n, "%s", L("Guardar y reiniciar", "Save and restart", "Salvar e reiniciar"));
 	}
 }
 
 static void wiz_change(int d) // left / right on the selected row
 {
 	int r = wiz, *v = &w_val[r];
-	if (r == W_LANG) *v = !*v, lang_en = *v; // the panel itself switches language at once
+	if (r == W_LANG) *v = (*v + (d > 0 ? 1 : 2)) % 3, lang_en = *v; // the panel itself switches language at once
 	else if (r == W_SRC) w_cur = w_cur + d < 0 ? 0 : w_cur + d >= W_NCHIP ? W_NCHIP - 1 : w_cur + d; // the cursor
 	else if (r == W_MC || r == W_VIDEO) *v = (*v + d + 3) % 3;
 	else if (r == W_NET) *v = *w_ip ? !*v : 0;
@@ -1885,11 +1955,11 @@ static void wiz_panel(void) // design: the △ options panel
 {
 	char a[128];
 	int r0 = upd_avail ? W_UPD : W_LANG, x = 270, y = upd_avail ? 74 : 96, w = 740, h = 70 + (W_ROWS - r0) * 46 + 40;
-	panel(x, y, w, h, UI_GEAR_18, L("Configuración de NULD", "NULD setup"));
+	panel(x, y, w, h, UI_GEAR_18, L("Configuración de NULD", "NULD setup", "Configuração do NULD"));
 	int ry = y + 70;
 	if (w_done == 2 || w_job == 3) { // the summary (an update fills it as it goes)
 		for (int k = 0; k < w_nsum; k++, ry += 40) gfx_text(&gfx_font_mono, x + 28, ry + 10, w_sum[k], TEXT);
-		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, L("X: reiniciar NULD", "X: restart NULD"), ACID);
+		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, L("X: reiniciar NULD", "X: restart NULD", "X: reiniciar NULD"), ACID);
 		else if (upd_phase && upd_k >= 0) { // the current file: its download, then its write to the USB
 			int size = upd.f[upd_k].size, got = upd_phase == 1 ? net_got : upd_done, pct = size > 0 ? (int)(100LL * got / size) : 0;
 			pct = pct > 100 ? 100 : pct;
@@ -1901,9 +1971,10 @@ static void wiz_panel(void) // design: the △ options panel
 		}
 		return;
 	}
-	static const char *const lab[2][W_ROWS] = {
+	static const char *const lab[3][W_ROWS] = {
 		{"", "Idioma", "Juegos desde", "Memory card", "Vídeo", "Red", "Arrancador en", "FreeMcBoot", ""},
-		{"", "Language", "Games from", "Memory card", "Video", "Network", "Boot stub on", "FreeMcBoot", ""}};
+		{"", "Language", "Games from", "Memory card", "Video", "Network", "Boot stub on", "FreeMcBoot", ""},
+ {"", "Idioma", "Origem dos jogos", "Memory card", "Vídeo", "Rede", "Inicializador em", "FreeMcBoot", ""}};
 	for (int r = r0; r < W_ROWS; r++, ry += 46) {
 		if (r == wiz) sel_row(x + 12, ry, w - 24, 40);
 		if (r == W_SRC) { gfx_text(&gfx_font_ui, x + 28, ry + 8, lab[lang_en][r], r == wiz ? TEXT : TEXT2), wiz_chips(x + w - 24, ry, r == wiz); continue; }
@@ -1915,7 +1986,7 @@ static void wiz_panel(void) // design: the △ options panel
 	if (wiz == W_FMCB && w_val[W_FMCB] > 1 && w_val[W_FMCB] <= W_NLK && w_fmcb_card() >= 0) { // what that button runs now
 		char key[24], cur[64];
 		snprintf(key, sizeof(key), "LK_%s_E1", w_lk[w_val[W_FMCB] - 1]);
-		snprintf(a, sizeof(a), L("Ahora ese botón abre: %s", "That button now runs: %s"), cnf_get(fmcb_txt[w_fmcb_card()], key, cur, sizeof(cur)) ? cur : "-");
+		snprintf(a, sizeof(a), L("Ahora ese botón abre: %s", "That button now runs: %s", "Esse botão agora abre: %s"), cnf_get(fmcb_txt[w_fmcb_card()], key, cur, sizeof(cur)) ? cur : "-");
 		gfx_text(&gfx_font_mono, x + 28, y + h - 30, a, LABEL);
 	}
 }
@@ -1941,8 +2012,7 @@ static void ach_panel(int i, int row)
 	panel(x, y, w, h, UI_TROPHY_18, a);
 	gfx_text(&gfx_font_mono, x + w - 24 - gfx_text_width(&gfx_font_mono, b), y + 24, b, ACID);
 	if (!ready) {
-		const char *m = ra_list_for == i && ra_list_st < 0 ? L("No se pudo leer la lista: la página del cliente en nuld debe estar abierta a la red",
-		                  "Could not read the list: the client's page on nuld must be open to the network") : L("Cargando logros...", "Loading achievements...");
+		const char *m = ra_list_for == i && ra_list_st < 0 ? L("No se pudo leer la lista: la página del cliente en nuld debe estar abierta a la red", "Could not read the list: the client's page on nuld must be open to the network", "Não foi possível ler a lista: a página do cliente no nuld deve estar acessível pela rede") : L("Cargando logros...", "Loading achievements...", "Carregando conquistas...");
 		gfx_text(&gfx_font_ui, x + (w - gfx_text_width(&gfx_font_ui, m)) / 2, y + h / 2 - 10, m, TEXT2);
 		return;
 	}
@@ -1992,7 +2062,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		int cx = GFX_W - 64;
 		if (is_ps2(sel) && *cv[sel].serial) { // saves card: PS2 games only (PS1 saves live in POPS VMCs, apps have none)
 		int vm = uses_vmc(sel), sc = 0; // a virtual card is listed by the icon thread first (phase 14)
-		if (vm && vmc_state[sel] != 2) snprintf(a, sizeof(a), L("Memory card virtual", "Virtual memory card")), snprintf(b, sizeof(b), L("LEYENDO...", "READING..."));
+		if (vm && vmc_state[sel] != 2) snprintf(a, sizeof(a), L("Memory card virtual", "Virtual memory card", "Memory card virtual")), snprintf(b, sizeof(b), L("LEYENDO...", "READING...", "LENDO..."));
 		else sc = save_info(sel, a, b, sizeof(a));
 		int cw = 18 + 64 + 14 + (gfx_text_width(&gfx_font_ui, a) > gfx_text_width(&gfx_font_mono, b) ?
 		                         gfx_text_width(&gfx_font_ui, a) : gfx_text_width(&gfx_font_mono, b)) + 18;
@@ -2026,7 +2096,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		static const int src_icon[SRC_N] = {UI_USB_18, UI_HDD_18, UI_HDD_18, UI_MX4SIO_18, UI_ILINK_18, UI_MMCE_18,
 		                                    UI_NET_18, UI_NET_18};
 		int st = src[(int)cv[sel].src].type;
-		const char *src_txt = cv[sel].kind == K_DISC ? L("UNIDAD", "DRIVE") : st == SRC_HDL ? "HDL" : src_label[st];
+		const char *src_txt = cv[sel].kind == K_DISC ? L("UNIDAD", "DRIVE", "UNIDADE") : st == SRC_HDL ? "HDL" : src_label[st];
 		x = tag(x, src_txt, cv[sel].kind == K_DISC ? UI_DVD_18 : src_icon[st], ACID, ACID, 0); // the source: acid
 		if (cv[sel].kind == K_PS2) x = tag(x, vid_label[game_video(sel)], UI_CHIP_18, EDGE, TEXT, 0); // what Neutrino forces
 		if (ra_game_ok(sel)) { // achievements tag (phase 16): "LOGROS" with a spinner while asking, none without a set
@@ -2034,8 +2104,8 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 			int st = ra_state[sel];
 			if (st <= 1 || st == RA_SET) {
 				char t[24];
-				if (st == RA_SET) snprintf(t, sizeof(t), L("LOGROS %d", "ACHIEVEMENTS %d"), ra_count[sel]);
-				else snprintf(t, sizeof(t), L("LOGROS", "ACHIEVEMENTS"));
+				if (st == RA_SET) snprintf(t, sizeof(t), L("LOGROS %d", "ACHIEVEMENTS %d", "CONQUISTAS %d"), ra_count[sel]);
+				else snprintf(t, sizeof(t), L("LOGROS", "ACHIEVEMENTS", "CONQUISTAS"));
 				int x0 = x;
 				x = tag(x, t, st == RA_SET ? UI_TROPHY_18 : -2, ACID, st == RA_SET ? ACID : TEXT2, 0);
 				if (st != RA_SET) { // asking: a spinner of 8 dots, the bright one going round (one turn per 0.8 s)
@@ -2077,24 +2147,24 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 	}
 	if (wiz >= 0) {
 		wiz_panel();
-		if (w_done != 2 && w_job != 3) hint(hint(GFX_W - 64, UI_CIRCLE_14, NULL, L("Cerrar", "Close")), UI_CROSS_14, NULL, L("Cambiar", "Change"));
+		if (w_done != 2 && w_job != 3) hint(hint(GFX_W - 64, UI_CIRCLE_14, NULL, L("Cerrar", "Close", "Fechar")), UI_CROSS_14, NULL, L("Cambiar", "Change", "Alterar"));
 	} else if (opt >= 0) {
 		options_panel(sel, opt);
-		hint(hint(GFX_W - 64, UI_TRIANGLE_14, NULL, L("Guardar", "Save")), UI_CROSS_14, NULL, L("Cambiar", "Change"));
+		hint(hint(GFX_W - 64, UI_TRIANGLE_14, NULL, L("Guardar", "Save", "Salvar")), UI_CROSS_14, NULL, L("Cambiar", "Change", "Alterar"));
 	} else if (ach_row >= 0) {
 		ach_panel(sel, ach_row);
-		hint(GFX_W - 64, UI_CIRCLE_14, NULL, L("Cerrar", "Close"));
+		hint(GFX_W - 64, UI_CIRCLE_14, NULL, L("Cerrar", "Close", "Fechar"));
 	} else if (ncv) { // "Datos" (not "Datos técnicos"): the filters need the room on the left
 		int logros = ra_game_ok(sel) && ra_state[sel] == RA_SET; // phase 16: its hint takes the room of "Datos" (still on SELECT)
-		int x = hint(logros ? GFX_W - 64 : hint(GFX_W - 64, -1, "SELECT", L("Datos", "Data")), UI_SQUARE_14, NULL, L("Vista", "View"));
-		if (cv[sel].kind == K_PS2) x = hint(x, UI_TRIANGLE_14, NULL, L("Opciones", "Options")); // Neutrino options only
-		if (logros) x = hint(x, UI_CIRCLE_14, NULL, L("Logros", "Achievements"));
-		hint(x, UI_CROSS_14, NULL, L("Jugar", "Play"));
-	} else hint(GFX_W - 64, -1, "SELECT", L("Datos", "Data"));
+		int x = hint(logros ? GFX_W - 64 : hint(GFX_W - 64, -1, "SELECT", L("Datos", "Data", "Dados")), UI_SQUARE_14, NULL, L("Vista", "View", "Visualização"));
+		if (cv[sel].kind == K_PS2) x = hint(x, UI_TRIANGLE_14, NULL, L("Opciones", "Options", "Opções")); // Neutrino options only
+		if (logros) x = hint(x, UI_CIRCLE_14, NULL, L("Logros", "Achievements", "Conquistas"));
+		hint(x, UI_CROSS_14, NULL, L("Jugar", "Play", "Jogar"));
+	} else hint(GFX_W - 64, -1, "SELECT", L("Datos", "Data", "Dados"));
 	if (vlabel > 0) { // the view's or filter's name, an acid-framed tag centred over the footer, ~1 s after a change
 		float va = vlabel > 50 ? ease((70 - vlabel) / 20.f) : vlabel / 50.f;
-		if (label_filter) snprintf(a, sizeof(a), L("MOSTRAR  %s", "SHOW  %s"), filter_name[filter]);
-		else snprintf(a, sizeof(a), L("VISTA  %s", "VIEW  %s"), view_name[view]);
+		if (label_filter) snprintf(a, sizeof(a), L("MOSTRAR  %s", "SHOW  %s", "MOSTRAR  %s"), filter_name[filter]);
+		else snprintf(a, sizeof(a), L("VISTA  %s", "VIEW  %s", "VISUALIZAÇÃO  %s"), view_name[view]);
 		gfx_tracking(3);
 		int w = 18 + 18 + 10 + gfx_text_width(&gfx_font_mono, a) + 20, x = (GFX_W - w) / 2, y = 590 + (int)(8 * (1 - va));
 		gfx_alpha((int)(0x80 * va));
@@ -2109,16 +2179,16 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 	if (dl_state && (dl_state != 3 || dl_fade > 0)) { // cover download status, left side of the toast row
 		char st[80];
 		switch (dl_state) {
-		case 1: snprintf(st, sizeof(st), L("PORTADAS: CONECTANDO A LA RED", "COVERS: CONNECTING TO THE NETWORK")); break;
-		case 2: snprintf(st, sizeof(st), L("PORTADAS: DESCARGANDO  %d / %d", "COVERS: DOWNLOADING  %d / %d"), dl_done, dl_total); break;
-		case 3: snprintf(st, sizeof(st), L("PORTADAS: %d NUEVAS DE %d", "COVERS: %d NEW OF %d"), dl_got, dl_total); break;
-		case NET_ERR_LINK: snprintf(st, sizeof(st), L("PORTADAS: SIN ENLACE DE RED (CABLE?)", "COVERS: NO NETWORK LINK (CABLE?)")); break;
-		case NET_ERR_DHCP: snprintf(st, sizeof(st), L("PORTADAS: SIN DIRECCIÓN IP (DHCP)", "COVERS: NO IP ADDRESS (DHCP)")); break;
-		case NET_ERR_DNS: snprintf(st, sizeof(st), L("PORTADAS: SIN DNS (¿HAY INTERNET?)", "COVERS: NO DNS (INTERNET?)")); break;
-		case NET_ERR_CONNECT: snprintf(st, sizeof(st), L("PORTADAS: GITHUB INALCANZABLE", "COVERS: GITHUB UNREACHABLE")); break;
-		case NET_ERR_TLS: snprintf(st, sizeof(st), L("PORTADAS: ERROR TLS", "COVERS: TLS ERROR")); break;
-		case NET_ERR_BUSY: snprintf(st, sizeof(st), L("PORTADAS: LA RED LA USAN LOS JUEGOS (UDP)", "COVERS: THE GAMES USE THE NETWORK (UDP)")); break;
-		default: snprintf(st, sizeof(st), L("PORTADAS: ERROR DE RED (%d)", "COVERS: NETWORK ERROR (%d)"), dl_state);
+		case 1: snprintf(st, sizeof(st), L("PORTADAS: CONECTANDO A LA RED", "COVERS: CONNECTING TO THE NETWORK", "CAPAS: CONECTANDO À REDE")); break;
+		case 2: snprintf(st, sizeof(st), L("PORTADAS: DESCARGANDO  %d / %d", "COVERS: DOWNLOADING  %d / %d", "CAPAS: BAIXANDO  %d / %d"), dl_done, dl_total); break;
+		case 3: snprintf(st, sizeof(st), L("PORTADAS: %d NUEVAS DE %d", "COVERS: %d NEW OF %d", "CAPAS: %d NOVAS DE %d"), dl_got, dl_total); break;
+		case NET_ERR_LINK: snprintf(st, sizeof(st), L("PORTADAS: SIN ENLACE DE RED (CABLE?)", "COVERS: NO NETWORK LINK (CABLE?)", "CAPAS: SEM CONEXÃO DE REDE (CABO?)")); break;
+		case NET_ERR_DHCP: snprintf(st, sizeof(st), L("PORTADAS: SIN DIRECCIÓN IP (DHCP)", "COVERS: NO IP ADDRESS (DHCP)", "CAPAS: SEM ENDEREÇO IP (DHCP)")); break;
+		case NET_ERR_DNS: snprintf(st, sizeof(st), L("PORTADAS: SIN DNS (¿HAY INTERNET?)", "COVERS: NO DNS (INTERNET?)", "CAPAS: SEM DNS (INTERNET?)")); break;
+		case NET_ERR_CONNECT: snprintf(st, sizeof(st), L("PORTADAS: GITHUB INALCANZABLE", "COVERS: GITHUB UNREACHABLE", "CAPAS: GITHUB INACESSÍVEL")); break;
+		case NET_ERR_TLS: snprintf(st, sizeof(st), L("PORTADAS: ERROR TLS", "COVERS: TLS ERROR", "CAPAS: ERRO TLS")); break;
+		case NET_ERR_BUSY: snprintf(st, sizeof(st), L("PORTADAS: LA RED LA USAN LOS JUEGOS (UDP)", "COVERS: THE GAMES USE THE NETWORK (UDP)", "CAPAS: REDE EM USO PELOS JOGOS (UDP)")); break;
+		default: snprintf(st, sizeof(st), L("PORTADAS: ERROR DE RED (%d)", "COVERS: NETWORK ERROR (%d)", "CAPAS: ERRO DE REDE (%d)"), dl_state);
 		}
 		gfx_alpha(dl_state == 3 && dl_fade < 30 ? dl_fade * 0x80 / 30 : 0x80);
 		gfx_tracking(2);
@@ -2158,25 +2228,25 @@ static int status_text(char *b, int max)
 				for (int i = 0; i < ncv; i++) games += cv[i].src == j && cv[i].kind != K_DISC;
 			}
 		if (src_err[t]) k += snprintf(b + k, max - k, "%-7s %s\n", src_label[t], src_err[t]);
-		else if (up) k += snprintf(b + k, max - k, L("%-7s OK, %d juegos\n", "%-7s OK, %d games\n"), src_label[t], games);
-		else k += snprintf(b + k, max - k, L("%-7s no encontrado\n", "%-7s not found\n"), src_label[t]);
+		else if (up) k += snprintf(b + k, max - k, L("%-7s OK, %d juegos\n", "%-7s OK, %d games\n", "%-7s OK, %d jogos\n"), src_label[t], games);
+		else k += snprintf(b + k, max - k, L("%-7s no encontrado\n", "%-7s not found\n", "%-7s não encontrado\n"), src_label[t]);
 	}
 	const char *ip = ini_get(&cfg, "red", "ip", "dhcp");
 	if (k >= max) return max - 1;
-	if (net_busy) k += snprintf(b + k, max - k, L("RED     de Neutrino (UDPBD / UDPFS), IP %s\n", "NETWORK Neutrino's (UDPBD / UDPFS), IP %s\n"), ip);
-	else if (net_res == 1) k += snprintf(b + k, max - k, L("RED     sin usar\n", "NETWORK not used\n"));
-	else if (net_res < 0) k += snprintf(b + k, max - k, L("RED     %s\n", "NETWORK %s\n"), net_err(net_res));
-	else k += snprintf(b + k, max - k, L("RED     %s (%s)\n", "NETWORK %s (%s)\n"), net_ip(), strcasecmp(ip, "dhcp") ? L("fija", "fixed") : "DHCP");
+	if (net_busy) k += snprintf(b + k, max - k, L("RED     de Neutrino (UDPBD / UDPFS), IP %s\n", "NETWORK Neutrino's (UDPBD / UDPFS), IP %s\n", "REDE    do Neutrino (UDPBD / UDPFS), IP %s\n"), ip);
+	else if (net_res == 1) k += snprintf(b + k, max - k, L("RED     sin usar\n", "NETWORK not used\n", "REDE    sem uso\n"));
+	else if (net_res < 0) k += snprintf(b + k, max - k, L("RED     %s\n", "NETWORK %s\n", "REDE    %s\n"), net_err(net_res));
+	else k += snprintf(b + k, max - k, L("RED     %s (%s)\n", "NETWORK %s (%s)\n", "REDE    %s (%s)\n"), net_ip(), strcasecmp(ip, "dhcp") ? L("fija", "fixed", "fixo") : "DHCP");
 	return k < max ? k : max - 1;
 }
 
 static const char *launch_problem(int i) // why X cannot start entry i, or NULL (shown as a toast)
 {
-	if (cv[i].kind == K_PS2 && !neutrino) return L("Falta Neutrino: cópialo a la carpeta neutrino/", "Neutrino missing: copy it to the neutrino/ folder");
+	if (cv[i].kind == K_PS2 && !neutrino) return L("Falta Neutrino: cópialo a la carpeta neutrino/", "Neutrino missing: copy it to the neutrino/ folder", "Neutrino ausente: copie para a pasta neutrino/");
 	if (cv[i].kind == K_PS1 && (!exists(POPSTARTER) || !exists("mass0:/POPS/POPS_IOX.PAK")))
-		return L("Faltan POPSTARTER.ELF y POPS_IOX.PAK en mass0:/POPS/", "POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/");
-	if (cv[i].kind == K_DISC && (cv[i].disc == D_NONE || cv[i].disc == D_READING)) return L("No hay un disco listo", "No disc ready");
-	if (cv[i].kind == K_DISC && (cv[i].disc == D_OTHER || !*cv[i].boot)) return L("Este disco no se puede iniciar", "This disc cannot be started");
+		return L("Faltan POPSTARTER.ELF y POPS_IOX.PAK en mass0:/POPS/", "POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/", "POPSTARTER.ELF e POPS_IOX.PAK ausentes em mass0:/POPS/");
+	if (cv[i].kind == K_DISC && (cv[i].disc == D_NONE || cv[i].disc == D_READING)) return L("No hay un disco listo", "No disc ready", "Nenhum disco pronto");
+	if (cv[i].kind == K_DISC && (cv[i].disc == D_OTHER || !*cv[i].boot)) return L("Este disco no se puede iniciar", "This disc cannot be started", "Não é possível iniciar este disco");
 	return NULL;
 }
 
@@ -2202,7 +2272,7 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 	splash_mark(640, 278, 28);
 	text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 	gfx_tracking(3);
-	text_c(&gfx_font_mono, 400, L("CREANDO MEMORY CARD VIRTUAL (8 MB)", "CREATING VIRTUAL MEMORY CARD (8 MB)"), LABEL);
+	text_c(&gfx_font_mono, 400, L("CREANDO MEMORY CARD VIRTUAL (8 MB)", "CREATING VIRTUAL MEMORY CARD (8 MB)", "CRIANDO MEMORY CARD VIRTUAL (8 MB)"), LABEL);
 	gfx_tracking(0);
 	gfx_end();
 	gfx_flip();
@@ -2230,8 +2300,8 @@ static void restart_self(void) // the setup wizard saved (#15): start NULD again
 static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app ELF, or the BIOS for discs
 {
 	launch_err = NULL;
-	const char *how[4] = {L("INICIANDO CON NEUTRINO", "STARTING WITH NEUTRINO"), L("INICIANDO CON POPSTARTER", "STARTING WITH POPSTARTER"), L("INICIANDO APLICACIÓN", "STARTING APPLICATION"),
-	                             L("INICIANDO DISCO", "STARTING DISC")};
+	const char *how[4] = {L("INICIANDO CON NEUTRINO", "STARTING WITH NEUTRINO", "INICIANDO COM NEUTRINO"), L("INICIANDO CON POPSTARTER", "STARTING WITH POPSTARTER", "INICIANDO COM POPSTARTER"), L("INICIANDO APLICACIÓN", "STARTING APPLICATION", "INICIANDO APLICATIVO"),
+	                             L("INICIANDO DISCO", "STARTING DISC", "INICIANDO DISCO")};
 	for (int t = 0; t < 40; t++) { // let the confirm sound play while the screen fades to the entry's name
 		gfx_begin();
 		splash_floor(t / 60.f, TEXT, 0x12);
@@ -2241,13 +2311,13 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 		gfx_tracking(3);
 		text_c(&gfx_font_mono, 400, how[(int)cv[i].kind], LABEL);
 		if (ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
-			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("CON LOGROS", "WITH ACHIEVEMENTS") : L("SIN LOGROS: AÚN NO HABÍA RESPUESTA", "NO ACHIEVEMENTS: NO ANSWER YET"),
+			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("CON LOGROS", "WITH ACHIEVEMENTS", "COM CONQUISTAS") : L("SIN LOGROS: AÚN NO HABÍA RESPUESTA", "NO ACHIEVEMENTS: NO ANSWER YET", "SEM CONQUISTAS: AINDA SEM RESPOSTA"),
 			       ra_state[i] == RA_SET ? ACID : LABEL);
 		gfx_tracking(0);
 		gfx_end();
 		gfx_flip();
 	}
-	if (cv[i].kind == K_PS2 && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("No se pudo crear la memory card virtual", "Could not create the virtual memory card"); return; }
+	if (cv[i].kind == K_PS2 && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("No se pudo crear la memory card virtual", "Could not create the virtual memory card", "Não foi possível criar o memory card virtual"); return; }
 	// no ISO read nor socket call of the achievements worker left half-way under the IOP reset (phase 16: the game
 	// hung when launched while its hash was being computed); the render thread sleeps so the worker can stop
 	ra_launching = 1, ra_abort = 1;
@@ -2323,7 +2393,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	if (neutrino_igr && (igr_exit || (neutrino_menu && igr_menu)))
 		argv[argc++] = "-igrexit=rom0:OSDSYS"; // the reboot: FMCB comes up from the card and autoboots NULD
 	if (neutrino_igr && igr_off) snprintf(igr[1], sizeof(igr[1]), "-igroff=0x%04x", igr_off), argv[argc++] = igr[1];
-	if (neutrino_lang && neutrino_menu && igr_menu && lang_en) argv[argc++] = "-igrlang=en"; // phase 18
+	if (neutrino_lang && neutrino_menu && igr_menu && lang_en) argv[argc++] = lang_en == LANG_PT_BR ? "-igrlang=pt-BR" : "-igrlang=en"; // phase 18
 	if (ra) argv[argc++] = "-cfg=ra", argv[argc++] = ra_arg; // phase 16b: the achievements agent and its watch list
 	// HD Loader needs Neutrino's own load stage (hdlfs; nhddl neutrino.c); so do nuld games, whose network stack is
 	// Neutrino's own (the launcher's lwIP is shut down, phase 17)
@@ -2332,7 +2402,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	for (int k = 0; k < argc; k++) len += strlen(argv[k]) + 1;
 	if (len > 255) { // the documented limit for Neutrino's arguments (nhddl README "Argument files")
 		printf("launch: %d bytes of arguments\n", len);
-		launch_err = L("Nombre del ISO demasiado largo para Neutrino: acórtalo", "ISO name too long for Neutrino: shorten it");
+		launch_err = L("Nombre del ISO demasiado largo para Neutrino: acórtalo", "ISO name too long for Neutrino: shorten it", "Nome da ISO muito longo para o Neutrino: encurte-o");
 		return;
 	}
 	// any MMCE (MemCard PRO 2, SD2PSX) switches to the game's card, as nhddl mmceMountVMC (#2); a game from the MMCE
@@ -2405,10 +2475,10 @@ int main(int argc, char *argv[])
 	int sel = 0, n = 0, idle = 0, overlay = 0, toast = 0, opt = -1, opt_mc = 0, switching = 0, booted = 0;
 	static char why_sel[160];
 	if (src_why) toast = 300, toast_msg = why_sel, // a source that did not come up (phase 14); SELECT lists them all (#4)
-		snprintf(why_sel, sizeof(why_sel), L("%s  (SELECT: estado)", "%s  (SELECT: status)"), src_why);
+		snprintf(why_sel, sizeof(why_sel), L("%s  (SELECT: estado)", "%s  (SELECT: status)", "%s  (SELECT: estado)"), src_why);
 	float s = 0;
 	unsigned prev = 0;
-	const char *saved = usb ? "" : L("  SIN USB", "  NO USB");
+	const char *saved = usb ? "" : L("  SIN USB", "  NO USB", "  SEM USB");
 	char text[1536];
 
 	for (int f = 0;; f++) {
@@ -2433,12 +2503,12 @@ int main(int argc, char *argv[])
 		}
 		refilter();
 		if (nord && pos[sel] < 0) sel = order[0]; // e.g. the disc changed kind under a PS1 filter
-		if (stub_new) stub_new = 0, toast = 240, toast_msg = L("Arrancador instalado en la memory card: BOOT/NULD.ELF", "Boot stub installed on the memory card: BOOT/NULD.ELF");
+		if (stub_new) stub_new = 0, toast = 240, toast_msg = L("Arrancador instalado en la memory card: BOOT/NULD.ELF", "Boot stub installed on the memory card: BOOT/NULD.ELF", "Inicializador instalado no memory card: BOOT/NULD.ELF");
 		static char upd_msg[96];
 		if (upd_avail == 1) upd_avail = 2, toast = 360, toast_msg = upd_msg, // #15
-			snprintf(upd_msg, sizeof(upd_msg), L("NULD %s disponible: START para actualizar", "NULD %s available: START to update"), upd.version);
+			snprintf(upd_msg, sizeof(upd_msg), L("NULD %s disponible: START para actualizar", "NULD %s available: START to update", "NULD %s disponível: START para atualizar"), upd.version);
 		static int ra_told; // phase 16: once per boot
-		if (ra_down && !ra_told) ra_told = 1, toast = 240, toast_msg = ra_down == 1 ? L("Logros: sin red", "Achievements: no network") : L("Logros: sin servidor", "Achievements: no server");
+		if (ra_down && !ra_told) ra_told = 1, toast = 240, toast_msg = ra_down == 1 ? L("Logros: sin red", "Achievements: no network", "Conquistas: sem rede") : L("Logros: sin servidor", "Achievements: no server", "Conquistas: sem servidor");
 		if (w_first && usb && booted) w_first = 0, wiz_open(), play(S_PANEL, 70); // first boot (#15)
 		if (wiz >= 0) { // setup wizard owns the pad until ○ / Save (#15)
 			if (w_done == 2) { if (pressed & PAD_CROSS) restart_self(); }
@@ -2451,7 +2521,7 @@ int main(int argc, char *argv[])
 				if (pressed & PAD_LEFT) wiz_change(-1), play(S_MOVE, 70);
 				if (pressed & PAD_CROSS && wiz == W_SAVE && w_job == 0) w_job = 2, SignalSema(icon_sema), play(S_CONFIRM, 80);
 				if (pressed & (PAD_CIRCLE | PAD_START)) // closed unsaved: the language as config.ini has it
-					wiz = -1, lang_en = !strcasecmp(ini_get(&cfg, "ui", "idioma", "es"), "en"), play(S_PANEL, 70);
+					wiz = -1, lang_en = ui_language(ini_get(&cfg, "ui", "idioma", "pt-BR")), play(S_PANEL, 70);
 			}
 		} else if (opt >= 0) { // options panel owns the pad until △/○
 			if (pressed & PAD_DOWN) { if (opt < OPT_ROWS - 1) opt++, play(S_MOVE, 70); else play(S_EDGE, 80); }
@@ -2467,11 +2537,10 @@ int main(int argc, char *argv[])
 				}
 				if (usb && !ini_save(&games, GAMES_INI, L("; NULD - opciones por juego (menú de triángulo)\n"
 				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = modos de Neutrino (0 2 3 5 7),\n"
-				                     "; mc = juego | compartida | fisica\n",
-				                     "; NULD - per-game options (triangle menu)\n"
+				                     "; mc = juego | compartida | fisica\n", "; NULD - per-game options (triangle menu)\n"
 				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = Neutrino modes (0 2 3 5 7),\n"
-				                     "; mc = juego | compartida | fisica\n")))
-					toast = 180, toast_msg = L("No se pudieron guardar las opciones en el USB", "Could not save the options to the USB");
+				                     "; mc = juego | compartida | fisica\n", "; NULD - opções por jogo (menu do triângulo)\n; video = nativo | 480p | 1080i, compat = 1-3, gc = modos do Neutrino (0 2 3 5 7),\n; mc = juego | compartida | fisica\n")))
+					toast = 180, toast_msg = L("No se pudieron guardar las opciones en el USB", "Could not save the options to the USB", "Não foi possível salvar as opções no USB");
 			}
 		} else if (ach_row >= 0) { // Logros panel owns the pad until ○/△ (phase 16)
 			int n = ra_list_for == sel && ra_list_st == 2 ? ra_list_n : 0, d = 0;
@@ -2530,7 +2599,7 @@ int main(int argc, char *argv[])
 				const char *why = launch_problem(sel);
 				play(why ? S_EDGE : S_CONFIRM, 85);
 				if (!why) launch(sel); // does not return when the program loads
-				toast = 150, toast_msg = why ? why : launch_err ? launch_err : L("No se pudo iniciar", "Could not start");
+				toast = 150, toast_msg = why ? why : launch_err ? launch_err : L("No se pudo iniciar", "Could not start", "Não foi possível iniciar");
 			}
 		}
 		if (toast > 0) toast--;
@@ -2560,10 +2629,9 @@ int main(int argc, char *argv[])
 		int tk = overlay ? status_text(text, sizeof(text)) : 0;
 		snprintf(text + tk, sizeof(text) - tk, L("VENTANA %u (%d FRAMES): MEDIANA %u us  MAX %u us  VSYNC PERDIDOS %u%s\n"
 		         "META: MAX <= 8333 us Y 0 PERDIDOS.  CARGA: %d PORTADAS EN %d ms\n"
-		         "SIN TOCAR NADA 5 s, LA SELECCIÓN SE MUEVE SOLA",
-		         "WINDOW %u (%d FRAMES): MEDIAN %u us  MAX %u us  MISSED VSYNC %u%s\n"
+		         "SIN TOCAR NADA 5 s, LA SELECCIÓN SE MUEVE SOLA", "WINDOW %u (%d FRAMES): MEDIAN %u us  MAX %u us  MISSED VSYNC %u%s\n"
 		         "GOAL: MAX <= 8333 us AND 0 MISSED.  LOAD: %d COVERS IN %d ms\n"
-		         "HANDS OFF FOR 5 s, THE SELECTION MOVES BY ITSELF"),
+		         "HANDS OFF FOR 5 s, THE SELECTION MOVES BY ITSELF", "JANELA %u (%d QUADROS): MEDIANA %u us  MAX %u us  VSYNC PERDIDOS %u%s\nMETA: MAX <= 8333 us E 0 PERDIDOS. CARGA: %d CAPAS EM %d ms\nAGUARDE 5 s SEM TOCAR, A SELEÇÃO SE MOVE SOZINHA"),
 		         windows, WINDOW, med, max, win_missed, saved, ncv, load_ms);
 		u32 t0 = cycles();
 		home(sel, s, k, toast, opt, overlay ? text : NULL, 1 - span(f, 0, 20));
@@ -2583,7 +2651,7 @@ int main(int argc, char *argv[])
 			if (fp) {
 				fprintf(fp, "nuld window %u (%d frames, %d covers, overlay %d): median %u us  max %u us  missed vsync %u  "
 				        "load %d ms\n", windows, WINDOW, ncv, overlay, med, max, missed, load_ms);
-				saved = fclose(fp) == 0 ? L("  (GUARDADO EN USB)", "  (SAVED TO USB)") : L("  (ERROR AL GUARDAR)", "  (SAVE ERROR)");
+				saved = fclose(fp) == 0 ? L("  (GUARDADO EN USB)", "  (SAVED TO USB)", "  (SALVO NO USB)") : L("  (ERROR AL GUARDAR)", "  (SAVE ERROR)", "  (ERRO AO SALVAR)");
 			}
 			win_missed = missed, n = 0, missed = 0;
 		}

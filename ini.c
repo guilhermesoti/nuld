@@ -165,7 +165,7 @@ int main(void)
 	static ini u, w;
 	static char out[1024];
 	ini_parse(&u, "[ui]\nidioma = en\n[red]\nip = 192.168.100.250\npuerta = 192.168.100.1\n[jellyfin]\nclave = a;b\nnuevo = 1\n");
-	const char *tpl = "; NULD - configuration\n\n[ui]\n; language\nidioma = es\n\n[red]\n; ip = dhcp or fixed\nip = dhcp\n"
+	const char *tpl = "; NULD - configuration\n\n[ui]\n; language\nidioma = pt-BR\n\n[red]\n; ip = dhcp or fixed\nip = dhcp\n"
 	                  "puerta =\ndns =\n\n[jellyfin]\nclave =\n";
 	int n = ini_render(tpl, &u, out, sizeof(out));
 	assert(n > 0 && strstr(out, "; ip = dhcp or fixed\nip = 192.168.100.250\npuerta = 192.168.100.1\ndns =\n"));

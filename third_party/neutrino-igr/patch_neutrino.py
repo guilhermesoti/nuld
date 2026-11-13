@@ -22,7 +22,7 @@ edit("common/include/eecore_config.h",
      "    // NULD phase 19: titles for the unlock notice, EEC_RA_TITLE bytes each (u32 id, title + NUL)\n"
      "    uint8_t *RaTitles;\n    uint32_t RaTitleCount;\n"
      "    // ORBIT phase 18: the in-game menu's language\n"
-     "    uint8_t IgrLang; // 0 Spanish, 1 English\n"
+     "    uint8_t IgrLang; // 0 Spanish, 1 English, 2 Brazilian Portuguese\n"
      "} __attribute__((packed, aligned(4)));\n\n"
      "#define EEC_RA_TITLE 32 // NULD phase 19: one notice title in the watch list's tail\n"
      "#define EEC_RA_TITLES_MAGIC 0x4C544152 // \"RATL\": the tail's last word, after its count")
@@ -186,7 +186,7 @@ edit(L, '        else if (!strncmp(argv[i], "-igrmenu=", 9))\n',
      '        else if (!strncmp(argv[i], "-ra=", 4)) // ORBIT phase 16b\n'
      '            ra_path = &argv[i][4];\n'
      '        else if (!strncmp(argv[i], "-igrlang=", 9)) // ORBIT phase 18\n'
-     '            igr_lang = !strcmp(&argv[i][9], "en");\n'
+     '            igr_lang = !strcmp(&argv[i][9], "en") ? 1 : (!strcmp(&argv[i][9], "pt-BR") || !strcmp(&argv[i][9], "pt")) ? 2 : 0;\n'
      '        else if (!strncmp(argv[i], "-igrmenu=", 9))\n')
 edit(L, 'static const char *igr_path = "";\n',
      'static const char *igr_path = "";\n'
@@ -195,7 +195,7 @@ edit(L, 'static const char *igr_path = "";\n',
 edit(L, '    printf("  -igrmenu=<mask>   ORBIT: libpad button mask that opens the in-game menu\\n");\n',
      '    printf("  -igrmenu=<mask>   ORBIT: libpad button mask that opens the in-game menu\\n");\n'
      '    printf("  -ra=<file>        ORBIT: RetroAchievements watch list for raagent.irx (phase 16b)\\n");\n'
-     '    printf("  -igrlang=<es|en>  ORBIT: language of the in-game menu (phase 18)\\n");\n')
+     '    printf("  -igrlang=<es|en|pt-BR>  ORBIT: language of the in-game menu (phase 18)\\n");\n')
 edit(L, "static int parse_cmdline_args(int argc, char *argv[], int *out_iELFArgcStart)\n", r'''#include "../../../common/include/ra_snap.h"
 // ORBIT phase 17: the watch list file is read while the boot environment's devices are still there (before the IOP
 // reboot into the load environment: without -qb, a nuld game, mass0: is gone by ra_place). Heap, not BSS: a 16 KB

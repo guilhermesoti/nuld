@@ -83,7 +83,7 @@ static const u8 font[64][5] = {
 };
 
 // 5x7 glyphs in 6x8 cells (the 6th column and 8th row are the gaps), bit 7 = left column
-enum { G_A, G_C, G_E, G_G, G_I, G_L, G_N, G_P, G_R, G_MARK, G_S, G_T, G_O, G_W, G_F, G_SP, G_END = 0xff };
+enum { G_A, G_C, G_E, G_G, G_I, G_L, G_N, G_P, G_R, G_MARK, G_S, G_T, G_O, G_W, G_F, G_SP, G_D, G_END = 0xff };
 static const u8 glyph[][8] = {
     {0x70, 0x88, 0x88, 0xf8, 0x88, 0x88, 0x88, 0x00}, // A
     {0x78, 0x80, 0x80, 0x80, 0x80, 0x80, 0x78, 0x00}, // C
@@ -101,17 +101,21 @@ static const u8 glyph[][8] = {
     {0x88, 0x88, 0x88, 0xa8, 0xa8, 0xd8, 0x88, 0x00}, // W
     {0xf8, 0x80, 0x80, 0xf0, 0x80, 0x80, 0x80, 0x00}, // F
     {0}, // space
+    {0xf0, 0x88, 0x88, 0x88, 0x88, 0x88, 0xf0, 0x00}, // D
 };
 enum { M_REBOOT, M_OFF, M_CANCEL, M_ITEMS };
-static const u8 labels[2][M_ITEMS][10] = { // eec.IgrLang: the launcher's [ui] idioma (phase 18)
+static const u8 labels[3][M_ITEMS][10] = { // eec.IgrLang: the launcher's [ui] idioma (phase 18)
     {{G_R, G_E, G_I, G_N, G_I, G_C, G_I, G_A, G_R, G_END}, // REINICIAR
      {G_A, G_P, G_A, G_G, G_A, G_R, G_END},                // APAGAR
      {G_C, G_A, G_N, G_C, G_E, G_L, G_A, G_R, G_END}},     // CANCELAR
     {{G_R, G_E, G_S, G_T, G_A, G_R, G_T, G_END},           // RESTART
      {G_P, G_O, G_W, G_E, G_R, G_SP, G_O, G_F, G_F, G_END}, // POWER OFF
      {G_C, G_A, G_N, G_C, G_E, G_L, G_END}},               // CANCEL
+    {{G_R, G_E, G_I, G_N, G_I, G_C, G_I, G_A, G_R, G_END}, // REINICIAR
+     {G_D, G_E, G_S, G_L, G_I, G_G, G_A, G_R, G_END},      // DESLIGAR
+     {G_C, G_A, G_N, G_C, G_E, G_L, G_A, G_R, G_END}},      // CANCELAR
 };
-#define label labels[eec.IgrLang ? 1 : 0]
+#define label labels[eec.IgrLang < 3 ? eec.IgrLang : 0]
 
 // NULD colours (R, G, B): panel, border (the acid accent), item, selected item
 static const u8 rgb[4][3] = {{12, 14, 18}, {200, 255, 46}, {138, 145, 156}, {230, 232, 236}};
@@ -353,7 +357,7 @@ void Notice_Run(u32 id, u32 points)
     do
         *--q = '0' + points % 10;
     while ((points /= 10) && q > num);
-    u32 n = put(note_text[0], 0, eec.IgrLang ? "ACHIEVEMENT UNLOCKED  " : "LOGRO DESBLOQUEADO  ");
+    u32 n = put(note_text[0], 0, eec.IgrLang == 2 ? "CONQUISTA LIBERADA  " : eec.IgrLang == 1 ? "ACHIEVEMENT UNLOCKED  " : "LOGRO DESBLOQUEADO  ");
     n = put(note_text[0], put(note_text[0], n, q), " PTS");
     u32 m = 0;
     note_text[1][0] = 0;

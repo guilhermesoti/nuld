@@ -1,0 +1,45 @@
+name: NULD PT-BR
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['site/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libjpeg-dev libssl-dev
+          python3 -m pip install Pillow
+          python3 tools/check_ptbr.py
+          python3 tools/font.py --selftest
+          sed '/^include /d' Makefile > /tmp/nuld-host.mk
+          make -f /tmp/nuld-host.mk test
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile PS2 launcher and in-game menu
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c '
+            apk add --no-cache make bash git python3 build-base patch cmake autoconf automake libtool pkgconf
+            git config --global --add safe.directory /src
+            bash build.sh APP=launcher
+            WORK=/tmp/nuld-neutrino bash tools/build_neutrino.sh
+          '
+      - name: Package translated files
+        run: |
+          mkdir -p dist/pt-BR/nuld dist/pt-BR/neutrino
+          cp launcher.elf dist/pt-BR/
+          cp -r dist/neutrino/. dist/pt-BR/neutrino/
+          cp pt-BR/config.ini dist/pt-BR/nuld/
+          cp pt-BR/LEIA-ME.md LICENSE dist/pt-BR/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NULD-PT-BR
+          path: dist/pt-BR/
+          if-no-files-found: error

@@ -24,9 +24,9 @@ SPECIAL = {"\u00df": "s", "\u00e6": "a", "\u00c6": "A", "\u0153": "o", "\u0152":
 # NULD (canvas "NULD — identidad"): Archivo at 125 % width for titles, Archivo for the interface, IBM Plex Mono for
 # data; the logo itself is vector (tools/logo.py), "logo" is only a small Michroma NULD. The atlas must stay at
 # 512x384 or under: at 1280x720 the two framebuffers leave the GS no room for more (gfx_init: 3200 words free)
-SPECS = (("title", "Archivo.ttf", 38, (700, 125), ASCII + BASE),
+SPECS = (("title", "Archivo.ttf", 38, (700, 125), ASCII + BASE + "âêôãõçÂÊÔÃÕÇàÀ"),
          ("ui", "Archivo.ttf", 17, (500, 100), None),
-         ("mono", "IBMPlexMono-Regular.ttf", 14, None, ASCII + BASE),
+         ("mono", "IBMPlexMono-Regular.ttf", 14, None, ASCII + BASE + "âêôãõçÂÊÔÃÕÇàÀ"),
          ("logo", "Michroma-Regular.ttf", 60, None, "NULD"))
 AW, PAGE_H, MAX_PAGES = 512, 128, 12               # PSMT4 page 128x128 -> 4 pages per 128 rows at 512 wide
 PAD = 2                                            # blank texels between glyphs (phase-3 known issue)

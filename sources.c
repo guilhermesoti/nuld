@@ -141,32 +141,32 @@ const char *src_init(unsigned mask, const char *ip, const char *ndir, int udpfs_
 {
 	const char *why = NULL;
 	if (mask & 1u << SRC_HDD && (!net_dev9() || !load(ata_bd_irx, size_ata_bd_irx, NULL, 0)))
-		FAIL(SRC_HDD, L("No se pudo cargar el driver del disco duro", "Could not load the hard disk driver"));
+		FAIL(SRC_HDD, L("No se pudo cargar el driver del disco duro", "Could not load the hard disk driver", "Não foi possível carregar o driver do HD"));
 	else if (mask & 1u << SRC_HDD) {
 		if (!add(SRC_HDD, "ata0:", 12)) { // no FAT / exFAT partition: an APA disk with HD Loader games?
 			static const char a[] = "-o\0" "4\0" "-n\0" "20"; // 4 descriptors, 20 buffers (Neutrino bsdfs-hdl.toml)
 			if (load(ps2hdd_bdm_irx, size_ps2hdd_bdm_irx, a, sizeof(a)) && mounted("hdd0:", 8) && apa_disk())
 				src[nsrc].type = SRC_HDL, src[nsrc].unit = 0, strcpy(src[nsrc].root, "hdd0:"), nsrc++;
-			else FAIL(SRC_HDD, L("No se encontró el disco duro (exFAT o HD Loader)", "Hard disk not found (exFAT or HD Loader)"));
+			else FAIL(SRC_HDD, L("No se encontró el disco duro (exFAT o HD Loader)", "Hard disk not found (exFAT or HD Loader)", "HD não encontrado (exFAT ou HD Loader)"));
 		}
 	}
 	if (mask & 1u << SRC_USB && !add(SRC_USB, "mass0:", 20)) // only when NULD runs from an MMCE (#8)
-		FAIL(SRC_USB, L("No se encontró la USB", "USB drive not found"));
+		FAIL(SRC_USB, L("No se encontró la USB", "USB drive not found", "Dispositivo USB não encontrado"));
 	if (mask & 1u << SRC_MX4SIO && mmce_up > 0) // NULD runs from an MMCE: same SIO2 port
-		mask &= ~(1u << SRC_MX4SIO), FAIL(SRC_MX4SIO, L("MX4SIO no va con NULD en un MMCE", "MX4SIO does not go with NULD on an MMCE"));
+		mask &= ~(1u << SRC_MX4SIO), FAIL(SRC_MX4SIO, L("MX4SIO no va con NULD en un MMCE", "MX4SIO does not go with NULD on an MMCE", "MX4SIO incompatível com NULD em um MMCE"));
 	if (mask & 1u << SRC_MX4SIO && mask & 1u << SRC_MMCE) // both on the SIO2 of slot 2 (nhddl README)
-		mask &= ~(1u << SRC_MMCE), FAIL(SRC_MMCE, L("MX4SIO y MMCE no van juntos: se usa MX4SIO", "MX4SIO and MMCE do not go together: using MX4SIO"));
+		mask &= ~(1u << SRC_MMCE), FAIL(SRC_MMCE, L("MX4SIO y MMCE no van juntos: se usa MX4SIO", "MX4SIO and MMCE do not go together: using MX4SIO", "MX4SIO e MMCE não funcionam juntos: usando MX4SIO"));
 	if (mask & 1u << SRC_MX4SIO && (!load(mx4sio_bd_mini_irx, size_mx4sio_bd_mini_irx, NULL, 0) || !add(SRC_MX4SIO, "mx4sio0:", 12)))
-		FAIL(SRC_MX4SIO, L("No se encontró la tarjeta del MX4SIO", "MX4SIO card not found"));
+		FAIL(SRC_MX4SIO, L("No se encontró la tarjeta del MX4SIO", "MX4SIO card not found", "Cartão do MX4SIO não encontrado"));
 	if (mask & 1u << SRC_ILINK && (!load(iLinkman_irx, size_iLinkman_irx, NULL, 0) ||
 	                               !load(IEEE1394_bd_mini_irx, size_IEEE1394_bd_mini_irx, NULL, 0) || !add(SRC_ILINK, "ilink0:", 16)))
-		FAIL(SRC_ILINK, L("No se encontró el disco iLink", "iLink disk not found"));
+		FAIL(SRC_ILINK, L("No se encontró el disco iLink", "iLink disk not found", "Disco iLink não encontrado"));
 	// mmceman also when the MMCE is no game source: a MemCard PRO 2 / SD2PSX gets the game ID (#2, as nhddl)
 	int mmce = !(mask & 1u << SRC_MX4SIO) && mmce_load();
 	if (mask & 1u << SRC_MMCE && mmce) {
 		int any = add(SRC_MMCE, "mmce0:", 4);
-		if (!(any |= add(SRC_MMCE, "mmce1:", 0))) FAIL(SRC_MMCE, L("No se encontró ningún MMCE", "No MMCE found"));
-	} else if (mask & 1u << SRC_MMCE) FAIL(SRC_MMCE, L("No se pudo cargar el driver del MMCE", "Could not load the MMCE driver"));
+		if (!(any |= add(SRC_MMCE, "mmce1:", 0))) FAIL(SRC_MMCE, L("No se encontró ningún MMCE", "No MMCE found", "Nenhum MMCE encontrado"));
+	} else if (mask & 1u << SRC_MMCE) FAIL(SRC_MMCE, L("No se pudo cargar el driver del MMCE", "Could not load the MMCE driver", "Não foi possível carregar o driver do MMCE"));
 	if (mask & 1u << SRC_UDPFS && !udpfs_mount && nsrc < SRC_MAX) // phase 17: listed from the server's catalog
 		src[nsrc].type = SRC_UDPFS, src[nsrc].unit = 0, strcpy(src[nsrc].root, "udpfs:"), nsrc++;
 	// Neutrino's smap + ministack, shared by udpbd and a mounted udpfs (any udpfs server, as nhddl: #10)
@@ -175,25 +175,25 @@ const char *src_init(unsigned mask, const char *ip, const char *ndir, int udpfs_
 	char arg[24];
 	int n = snprintf(arg, sizeof(arg), "ip=%s", ip) + 1;
 	if (udp && (!strcasecmp(ip, "dhcp") || !*ip)) // ministack has no DHCP (catalog udpfs takes the lease, src_udpfs_ip)
-		fail = L("UDPBD / UDPFS sin catálogo necesitan una IP fija en [red] ip", "UDPBD / UDPFS without a catalog need a fixed IP in [red] ip");
+		fail = L("UDPBD / UDPFS sin catálogo necesitan una IP fija en [red] ip", "UDPBD / UDPFS without a catalog need a fixed IP in [red] ip", "UDPBD / UDPFS sem catálogo exigem IP fixo em [red] ip");
 	else if (udp && (net_busy = 1, // Neutrino's smap owns the adapter from here on
 	                 !net_dev9() || !load_file(ndir, "smap.irx", NULL, 0) || !load_file(ndir, "ministack.irx", arg, n)))
-		fail = L("No se cargaron smap / ministack de neutrino/modules", "smap / ministack from neutrino/modules did not load");
+		fail = L("No se cargaron smap / ministack de neutrino/modules", "smap / ministack from neutrino/modules did not load", "smap / ministack de neutrino/modules não carregados");
 	for (int t = SRC_UDPBD; fail && t <= SRC_UDPFS; t++)
 		if (udp & 1u << t) FAIL(t, fail);
 	if (fail) return why;
 	static char e[2][96];
 	if (udp & 1u << SRC_UDPBD) {
 		neutrino_ip(ndir, "bsd-udpbd.toml", ip);
-		if (!load_file(ndir, "udpbd.irx", NULL, 0)) FAIL(SRC_UDPBD, L("No se cargó udpbd.irx de neutrino/modules", "udpbd.irx from neutrino/modules did not load"));
+		if (!load_file(ndir, "udpbd.irx", NULL, 0)) FAIL(SRC_UDPBD, L("No se cargó udpbd.irx de neutrino/modules", "udpbd.irx from neutrino/modules did not load", "udpbd.irx de neutrino/modules não carregado"));
 		else if (!add(SRC_UDPBD, "udpbd0:", 24))
-			snprintf(e[0], sizeof(e[0]), L("No respondió el servidor UDPBD (la PS2 es %s, misma red?)", "The UDPBD server did not answer (the PS2 is %s, same network?)"), ip), FAIL(SRC_UDPBD, e[0]);
+			snprintf(e[0], sizeof(e[0]), L("No respondió el servidor UDPBD (la PS2 es %s, misma red?)", "The UDPBD server did not answer (the PS2 is %s, same network?)", "Servidor UDPBD sem resposta (PS2 em %s, na mesma rede?)"), ip), FAIL(SRC_UDPBD, e[0]);
 	}
 	if (udp & 1u << SRC_UDPFS) { // udpfs_ioman looks for the server (broadcast, 5 s) as it starts: "udpfs:"
 		neutrino_ip(ndir, "bsd-udpfs.toml", ip);
-		if (!load_file(ndir, "udpfs_ioman.irx", NULL, 0)) FAIL(SRC_UDPFS, L("No se cargó udpfs_ioman.irx de neutrino/modules", "udpfs_ioman.irx from neutrino/modules did not load"));
+		if (!load_file(ndir, "udpfs_ioman.irx", NULL, 0)) FAIL(SRC_UDPFS, L("No se cargó udpfs_ioman.irx de neutrino/modules", "udpfs_ioman.irx from neutrino/modules did not load", "udpfs_ioman.irx de neutrino/modules não carregado"));
 		else if (!add(SRC_UDPFS, "udpfs:", 8))
-			snprintf(e[1], sizeof(e[1]), L("No respondió el servidor UDPFS (la PS2 es %s, misma red?)", "The UDPFS server did not answer (the PS2 is %s, same network?)"), ip), FAIL(SRC_UDPFS, e[1]);
+			snprintf(e[1], sizeof(e[1]), L("No respondió el servidor UDPFS (la PS2 es %s, misma red?)", "The UDPFS server did not answer (the PS2 is %s, same network?)", "Servidor UDPFS sem resposta (PS2 em %s, na mesma rede?)"), ip), FAIL(SRC_UDPFS, e[1]);
 	}
 	return why;
 }
