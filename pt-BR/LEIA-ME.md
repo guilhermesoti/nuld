@@ -47,8 +47,10 @@ O workflow **NULD PT-BR** valida a tradução e compila o launcher e o Neutrino,
 produzindo um artefato para download na página da execução. A geração dos fontes
 não substitui o teste no console real.
 
-Validações locais: fonte 512×384 dentro do limite original de 12 páginas;
-autotestes nativos até icon passaram; o teste cover precisa do cabeçalho libjpeg,
-ausente no ambiente local. A compilação PS2 é executada pelo GitHub Actions.
+Validações: fonte 512×384 dentro do limite original de 12 páginas; as 144 chamadas
+traduzidas preservam os parâmetros printf; seleção dos três idiomas validada.
+Os 12 autotestes nativos passaram no GitHub Actions, incluindo capas (libjpeg).
+A compilação PS2 também é executada pelo workflow. O núcleo Neutrino inclui uma
+implementação freestanding de strlcpy para compatibilidade com o PS2SDK atual.
 
 Licenças e autoria originais preservadas: GPL-3.0 para NULD e AFL-3.0 para o fork Neutrino.

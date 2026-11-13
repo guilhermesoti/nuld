@@ -29,7 +29,7 @@ edit("common/include/eecore_config.h",
 
 # 2. ee_core: build igr.c; hook libpad when the game asks for an IOP reset and right after its ELF is loaded
 edit("ee/ee_core/Makefile", "CHEATCORE_EE_OBJS = cheat_engine.o cheat_api.o",
-     "CHEATCORE_EE_OBJS = cheat_engine.o cheat_api.o igr.o menu.o ra.o resetspu_irx.o # ORBIT In Game Reset, achievements")
+     "CHEATCORE_EE_OBJS = cheat_engine.o cheat_api.o igr.o menu.o ra.o sdk_compat.o resetspu_irx.o # ORBIT In Game Reset, achievements")
 edit("ee/ee_core/src/iopmgr.c", '#include "eecore_config.h"\n', '#include "eecore_config.h"\n#include "igr.h"\n')
 edit("ee/ee_core/src/iopmgr.c",
      "    struct _iop_reset_pkt *reset_pkt = (struct _iop_reset_pkt *)sdd->src;\n\n    New_Reset_Iop2(",

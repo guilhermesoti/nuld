@@ -1,3 +1,7 @@
+> **Fork em português brasileiro:** interface, configuração e menu em jogo traduzidos.
+> Veja [pt-BR/LEIA-ME.md](pt-BR/LEIA-ME.md) para instalação e compilação.
+> Baixe os arquivos na execução do workflow [NULD PT-BR](../../actions/workflows/ptbr.yml).
+
 # NULD — a game launcher for the PlayStation 2
 
 NULD is a launcher that runs on a real PS2. It lists your games with their covers, starts them through
