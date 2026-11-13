@@ -33,9 +33,11 @@ jobs:
           '
       - name: Package translated files
         run: |
+          sudo chown -R "$(id -u):$(id -g)" dist
           mkdir -p dist/pt-BR/nuld dist/pt-BR/neutrino
           cp launcher.elf dist/pt-BR/
           cp -r dist/neutrino/. dist/pt-BR/neutrino/
+          cp third_party/neutrino-igr/LICENSE dist/pt-BR/neutrino/
           cp pt-BR/config.ini dist/pt-BR/nuld/
           cp pt-BR/LEIA-ME.md LICENSE dist/pt-BR/
       - uses: actions/upload-artifact@v4

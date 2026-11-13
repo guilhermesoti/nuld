@@ -19,6 +19,16 @@ internos do INI permanecem no formato original para compatibilidade. O exemplo
 `pt-BR/config.ini` tem comentários em português; use-o apenas em instalação nova
 ou depois de copiar suas configurações atuais.
 
+## Instalação no pendrive
+
+O artefato NULD-PT-BR é uma atualização: copie seus arquivos sobre uma instalação
+completa do NULD oficial. Ele traz o launcher e os três módulos recompilados do
+Neutrino; os demais drivers de `neutrino/modules/` precisam continuar no pendrive.
+Faça uma cópia do seu `nuld/config.ini` antes de substituir; em instalações já
+configuradas, mantenha seu arquivo e altere somente `[ui] idioma = pt-BR`.
+Inicie `mass0:/launcher.elf` pelo uLaunchELF/FreeMcBoot. O funcionamento e a
+aparência final ainda precisam ser conferidos em um PS2 físico.
+
 ## Escopo
 
 Interface do launcher, assistente, opções por jogo, erros de dispositivos e rede,
