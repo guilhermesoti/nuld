@@ -807,9 +807,9 @@ static const char *const config_template[3] = {
 	"; dispositivo, se crea al jugar), compartida = una virtual para todos (VMC/NULD.bin), fisica = la de la ranura 1.\n"
 	"; Cada juego lo cambia con triángulo. HD Loader solo admite la física; un MMCE cambia solo a la del juego.\n"
 	"modo = juego\n"
-	"\n[video]\n; modo de video de los juegos: nativo, 480p o 1080i (cada juego lo cambia con triángulo)\nmodo = 480p\n"
+	"\n[video]\n; modo de video de los juegos: nativo, 480p o 1080i (cada juego lo cambia con triángulo)\nmodo = nativo\n"
 	"; pantalla del menú: 720p, o 480i para una tele CRT (con 480i los juegos van en nativo, salvo los que cambies\n"
-	"; con triángulo). L2+R2 a la vez la cambia y la guarda aquí, por si no se ve nada\npantalla = 720p\n"
+	"; con triángulo). L2+R2 a la vez la cambia y la guarda aquí, por si no se ve nada\npantalla = 480i\n"
 	"\n[sonido]\n; volumen de los sonidos del menú, 0-100\nvolumen = 100\n"
 	"\n[red]\n; ip = dhcp, o una IP fija con su mascara, puerta (de enlace) y dns; dns también vale con dhcp (p. ej. 1.1.1.1)\nip = dhcp\nmascara = 255.255.255.0\n"
 	"puerta =\ndns =\n"
@@ -842,9 +842,9 @@ static const char *const config_template[3] = {
 	"; device, created on first play), compartida = one virtual card for all (VMC/NULD.bin), fisica = the one in slot 1.\n"
 	"; Each game can change it with triangle. HD Loader only allows the physical one; an MMCE switches to the game's.\n"
 	"modo = juego\n"
-	"\n[video]\n; video mode of the games: nativo, 480p or 1080i (each game can change it with triangle)\nmodo = 480p\n"
+	"\n[video]\n; video mode of the games: nativo, 480p or 1080i (each game can change it with triangle)\nmodo = nativo\n"
 	"; menu screen: 720p, or 480i for a CRT TV (with 480i the games run native, except the ones you change\n"
-	"; with triangle). L2+R2 together switches it and saves it here, in case nothing shows\npantalla = 720p\n"
+	"; with triangle). L2+R2 together switches it and saves it here, in case nothing shows\npantalla = 480i\n"
 	"\n[sonido]\n; volume of the menu sounds, 0-100\nvolumen = 100\n"
 	"\n[red]\n; ip = dhcp, or a fixed IP with its mascara (netmask), puerta (gateway) and dns; dns also works with dhcp (e.g. 1.1.1.1)\nip = dhcp\nmascara = 255.255.255.0\n"
 	"puerta =\ndns =\n"
@@ -886,9 +886,9 @@ static const char *const config_template[3] = {
 	"\n"
 	"[video]\n"
 	"; Modo dos jogos: nativo, 480p ou 1080i. Triângulo altera por jogo.\n"
-	"modo = 480p\n"
+	"modo = nativo\n"
 	"; Menu: 720p ou 480i (TV de tubo). L2+R2 alterna e salva. Em 480i, jogos usam nativo por padrão.\n"
-	"pantalla = 720p\n"
+	"pantalla = 480i\n"
 	"\n"
 	"[sonido]\n"
 	"; Volume dos sons do menu: 0-100\n"
@@ -937,7 +937,7 @@ static const char *src_why; // the first source that did not come up (toast afte
 static int ra_on;           // [logros] activos (phase 16)
 int lang_en = LANG_PT_BR;                // [ui] idioma = en (phase 18, lang.h)
 static int w_first;         // no config.ini at boot: the setup wizard opens by itself (#15)
-static int crt;             // [video] pantalla = 480i: menu in 480i / 576i, games native by default
+static int crt = 1;         // [video] pantalla = 480i: menu in 480i / 576i, games native by default
 
 static void load_config(void) // loader thread, before the splash sound
 {
@@ -981,7 +981,7 @@ static void load_config(void) // loader thread, before the splash sound
 	igr_off = combo_mask(ini_get(&cfg, "igr", "apagar", "L1+L2+R1+R2+L3+R3"));
 	stub_install = igr_exit || igr_menu; // the reboot ends in FMCB, which autoboots the stub
 	ra_on = !strcasecmp(ini_get(&cfg, "logros", "activos", "si"), "si"); // phase 16
-	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "720p"), "480i");
+	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "480i"), "480i");
 	src_want = src_mask(ini_get(&cfg, "juegos", "origen", "usb")); // phase 14
 	if (!src_want) src_want = 1u << SRC_USB, src_why = L("Origen de juegos desconocido en config.ini: usando USB", "Unknown game source in config.ini: using USB", "Origem de jogos desconhecida em config.ini: usando USB");
 	ini_load(&games, GAMES_INI);
@@ -1019,7 +1019,7 @@ static int game_vid(int i) { return vid_index(ini_get(&games, cv[i].serial, "vid
 static int game_video(int i) // effective mode, 1..3
 {
 	int v = game_vid(i);
-	if (!v) v = crt ? 1 : vid_index(ini_get(&cfg, "video", "modo", "480p")); // a CRT shows neither 480p nor 1080i
+	if (!v) v = crt ? 1 : vid_index(ini_get(&cfg, "video", "modo", "nativo")); // a CRT shows neither 480p nor 1080i
 	return v ? v : 2;
 }
 static int mc_index(const char *s)
@@ -1787,7 +1787,7 @@ static void wiz_open(void)
 	w_cur = 0;
 	for (int k = 0; k < 3; k++) {
 		if (!strcasecmp(ini_get(&cfg, "memorycard", "modo", "juego"), w_mcm[k])) w_val[W_MC] = k;
-		if (!strcasecmp(ini_get(&cfg, "video", "modo", "480p"), w_vid[k])) w_val[W_VIDEO] = k;
+		if (!strcasecmp(ini_get(&cfg, "video", "modo", "nativo"), w_vid[k])) w_val[W_VIDEO] = k;
 	}
 	snprintf(w_ip, sizeof(w_ip), "%s", strcasecmp(ip, "dhcp") ? ip : "");
 	w_val[W_NET] = *w_ip != 0;
@@ -2161,6 +2161,16 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		if (logros) x = hint(x, UI_CIRCLE_14, NULL, L("Logros", "Achievements", "Conquistas"));
 		hint(x, UI_CROSS_14, NULL, L("Jugar", "Play", "Jogar"));
 	} else hint(GFX_W - 64, -1, "SELECT", L("Datos", "Data", "Dados"));
+	if (!pad_connected()) {
+        char pad_message[160];
+        snprintf(pad_message, sizeof(pad_message),
+                 L("Control sin respuesta: puerto 1=%d / puerto 2=%d",
+                   "Controller not responding: port 1=%d / port 2=%d",
+                   "Controle sem resposta: porta 1=%d / porta 2=%d"),
+                 pad_port_state(0), pad_port_state(1));
+        gfx_rect(190, 592, 900, 44, BG);
+        text_c(&gfx_font_ui, 605, pad_message, TEXT);
+    }
 	if (vlabel > 0) { // the view's or filter's name, an acid-framed tag centred over the footer, ~1 s after a change
 		float va = vlabel > 50 ? ease((70 - vlabel) / 20.f) : vlabel / 50.f;
 		if (label_filter) snprintf(a, sizeof(a), L("MOSTRAR  %s", "SHOW  %s", "MOSTRAR  %s"), filter_name[filter]);

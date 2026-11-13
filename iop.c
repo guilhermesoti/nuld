@@ -4,6 +4,8 @@
 // mcman, mcserv (after sio2man: ps2sdk libmc.h), freepad, libsd, audsrv (libsd first: ps2sdk audsrv playadpcm.c),
 // bdm, bdmfs_fatfs, usbd_mini, usbmass_bd_mini; then poll mass0: while the stick mounts.
 #include <dirent.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <iopcontrol.h>
 #include <loadfile.h>
@@ -17,7 +19,24 @@
 #define IRX(m) extern unsigned char m##_irx[]; extern unsigned int size_##m##_irx
 IRX(iomanX); IRX(fileXio); IRX(sio2man); IRX(mcman); IRX(mcserv); IRX(freepad); IRX(libsd); IRX(audsrv); IRX(bdm); IRX(bdmfs_fatfs); IRX(usbd_mini); IRX(usbmass_bd_mini);
 
-static unsigned char pad_buf[256] __attribute__((aligned(64))); // size/alignment as nhddl src/pad.c:8
+// Each open port needs its own 256-byte, 64-byte-aligned DMA region.
+static unsigned char pad_buf[2][256] __attribute__((aligned(64)));
+static volatile int pad_open[2];
+static int pad_mode_tried[2];
+static int pad_state[2] = {-1, -1};
+static int pad_valid[2];
+
+static void pads_init(void)
+{
+    if (padInit(0) != 1) {
+        printf("pad: libpad initialization failed\n");
+        return;
+    }
+    for (int port = 0; port < 2; port++) {
+        pad_open[port] = padPortOpen(port, 0, pad_buf[port]) != 0;
+        printf("pad: port %d open=%d\n", port + 1, pad_open[port]);
+    }
+}
 
 int iop_load(void)
 {
@@ -39,8 +58,7 @@ int iop_load(void)
 		if (mods[i].irx == fileXio_irx)
 			fileXioInit();
 	}
-	padInit(0);
-	padPortOpen(0, 0, pad_buf);
+	pads_init();
 	return 1;
 }
 
@@ -56,8 +74,54 @@ int usb_wait(void)
 
 int iop_init(void) { return iop_load() && usb_wait(); }
 
-unsigned pad_buttons(void) // pressed = 1 (buttons are active-low, nhddl src/pad.c:35)
+// Do not busy-wait for a disconnected pad: the UI must keep rendering and permit hot-plugging.
+unsigned pad_buttons(void)
 {
-	struct padButtonStatus b;
-	return padRead(0, 0, &b) != 0 ? (0xffff ^ b.btns) & 0xffff : 0;
+    unsigned buttons = 0;
+    for (int port = 0; port < 2; port++) {
+        pad_valid[port] = 0;
+        if (!pad_open[port]) continue;
+        int state = padGetState(port, 0);
+        if (state != pad_state[port]) {
+            printf("pad: port %d state=%d\n", port + 1, state);
+            pad_state[port] = state;
+        }
+        if (state == PAD_STATE_DISCONN || state == PAD_STATE_ERROR) {
+            pad_mode_tried[port] = 0;
+            continue;
+        }
+        if (state != PAD_STATE_STABLE && state != PAD_STATE_FINDCTP1) continue;
+        // Only ask for analog mode when the controller advertises it. No pressure or vibration commands:
+        // digital pads and clones remain usable; unlocked mode lets the ANALOG button keep working.
+        if (!pad_mode_tried[port] && state == PAD_STATE_STABLE) {
+            pad_mode_tried[port] = 1;
+            int count = padInfoMode(port, 0, PAD_MODETABLE, -1);
+            for (int mode = 0; mode < count && mode < 8; mode++) {
+                if (padInfoMode(port, 0, PAD_MODETABLE, mode) == PAD_TYPE_DUALSHOCK) {
+                    if (padSetMainMode(port, 0, PAD_MMODE_DUALSHOCK, PAD_MMODE_UNLOCK))
+                        goto next_port; // asynchronous command: wait until a later frame to read
+                    break; // rejected command: keep the controller's current mode
+                }
+            }
+        }
+        struct padButtonStatus data;
+        memset(&data, 0, sizeof(data));
+        int len = padRead(port, 0, &data);
+        // libpad returns a packet length, not a boolean. Incomplete/stale packets are not button states.
+        if (len < 4 || data.ok != 0 || (data.mode >> 4) < 4) continue;
+        unsigned held = (0xffff ^ data.btns) & 0xffff;
+        if (len >= 8 && ((data.mode >> 4) == PAD_TYPE_DUALSHOCK || (data.mode >> 4) == PAD_TYPE_ANALOG)) {
+            if (data.ljoy_h < 64) held |= PAD_LEFT;
+            if (data.ljoy_h > 192) held |= PAD_RIGHT;
+            if (data.ljoy_v < 64) held |= PAD_UP;
+            if (data.ljoy_v > 192) held |= PAD_DOWN;
+        }
+        buttons |= held;
+        pad_valid[port] = 1;
+next_port:;
+    }
+    return buttons;
 }
+
+int pad_connected(void) { return pad_valid[0] || pad_valid[1]; }
+int pad_port_state(int port) { return port >= 0 && port < 2 ? pad_state[port] : -1; }

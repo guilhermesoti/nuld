@@ -1,3 +1,22 @@
+## Atualização AV e controle com fio
+
+O padrão de instalações novas agora é 480i e vídeo dos jogos nativo, compatível com
+cabo AV composto. Configurações existentes são preservadas; ajuste em `[video]`:
+`pantalla = 480i` e `modo = nativo`.
+
+A leitura dos controles agora verifica o estado e o pacote recebido, aceita as duas
+portas e solicita modo analógico desbloqueado apenas quando o controle declara suporte.
+O direcional e o analógico esquerdo navegam pelo menu. Reencaixar um controle é aceito
+sem reiniciar. Não é necessário ativar pressão ou vibração para navegar.
+
+Se ainda não responder, aparece “Controle sem resposta” e o estado de cada porta:
+`-1` = não inicializada/aberta; `0` = desconectado; `1/2` = identificando;
+`5` = comando em andamento; `6` = pronto; `7` = erro.
+Envie a mensagem exibida e informe se o mesmo controle funciona no uLaunchELF/OPL.
+
+Esta correção foi validada com testes de pacotes simulados e compilação PS2.
+O funcionamento com seu controle físico precisa ser testado no console.
+
 # NULD em português brasileiro
 
 Fork de [danielnuld/nuld](https://github.com/danielnuld/nuld), mantido em

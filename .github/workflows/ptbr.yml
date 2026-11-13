@@ -16,6 +16,7 @@ jobs:
           sudo apt-get install -y libjpeg-dev libssl-dev
           python3 -m pip install Pillow
           python3 tools/check_ptbr.py
+          python3 tools/test_pad.py
           python3 tools/font.py --selftest
           sed '/^include /d' Makefile > /tmp/nuld-host.mk
           make -f /tmp/nuld-host.mk test
