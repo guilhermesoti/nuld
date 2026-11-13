@@ -1,0 +1,34 @@
+name: Gerenciador de Capas Windows
+on:
+  push:
+    branches: [master]
+    paths: ['desktop/nuld-capas/**', 'tools/covers.py', '.github/workflows/cover-manager.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r desktop/nuld-capas/requirements.txt pyinstaller
+      - run: python -m unittest discover -s desktop/nuld-capas -p "test_*.py" -v
+      - run: python desktop/nuld-capas/app.py --smoke-test
+      - name: Build portable executable
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name NULD-Capas --paths tools --paths desktop/nuld-capas --distpath desktop-dist desktop/nuld-capas/app.py
+      - name: Test executable and prepare download
+        shell: pwsh
+        run: |
+          $process = Start-Process -FilePath desktop-dist/NULD-Capas.exe -ArgumentList '--smoke-test' -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Falha ao abrir o executável: $($process.ExitCode)" }
+          Copy-Item desktop/nuld-capas/LEIA-ME.md desktop-dist/
+          Copy-Item LICENSE desktop-dist/
+          Get-FileHash desktop-dist/NULD-Capas.exe -Algorithm SHA256 | Format-List | Out-File desktop-dist/SHA256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NULD-Capas-Windows-v1.0
+          path: desktop-dist/
+          if-no-files-found: error

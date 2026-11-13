@@ -1,3 +1,7 @@
+> **Gerenciador de capas para Windows:** baixe o artefato **NULD-Capas-Windows-v1.0**
+> em [Actions](../../actions/workflows/cover-manager.yml). Veja o
+> [guia do aplicativo](desktop/nuld-capas/LEIA-ME.md).
+
 > **Fork em português brasileiro:** interface, configuração e menu em jogo traduzidos.
 > Veja [pt-BR/LEIA-ME.md](pt-BR/LEIA-ME.md) para instalação e compilação.
 > Baixe os arquivos na execução do workflow [NULD PT-BR](../../actions/workflows/ptbr.yml).
